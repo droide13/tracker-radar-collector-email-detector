@@ -67,13 +67,16 @@ function isButtonOrLink(typeOfEl) {
 /**
  * @param {string} browserScriptTemplate
  * @param {string} loginRegexSrc
+ * @param {function|null} log
  */
-function _buildScript(browserScriptTemplate, loginRegexSrc) {
+function _buildScript(browserScriptTemplate, loginRegexSrc, log = null) {
     let script = browserScriptTemplate;
     if (loginRegexSrc) {
     script = script.replace('__LOGIN_REGEX_SRC__', JSON.stringify(loginRegexSrc));
     }
-    return script.replace('__SERIALIZE_EL__', SERIALIZE_EL);
+    script = script.replace('__SERIALIZE_EL__', SERIALIZE_EL)
+    // For debugging log(script)
+    return script;
 }
 
 // ── CDP helper ────────────────────────────────────────────────────────────────
@@ -114,10 +117,13 @@ async function evaluateInSession(session, expression, log = null) {
  * login buttons are most commonly found.
  *
  * @param {object} session - CDP session (fathom must be injected)
+ * @param {function|null} log
  * @returns {Promise<ElementAttributes[]>}
  */
-async function findLoginLinksByCoords(session) {
-    const result = await evaluateInSession(session, _buildScript(findLoginLinksbycoordsJS, null));
+async function findLoginLinksByCoords(session, log=null) {
+    let fathomtest = await session.send('Runtime.evaluate', { expression: "fathom", returnByValue: false });
+    log(`fathomtest(loginC): ${JSON.stringify(fathomtest)}`)        
+    const result = await evaluateInSession(session, _buildScript(findLoginLinksbycoordsJS, null, log));
     return result || [];
 }
 
@@ -125,12 +131,15 @@ async function findLoginLinksByCoords(session) {
  * Find login/register links by matching element attributes against login regexes.
  *
  * @param {object} session - CDP session (fathom must be injected)
+ * @param {function|null} log
  * @param {boolean} exactMatch
  * @returns {Promise<ElementAttributes[]>}
  */
-async function findLoginLinks(session, exactMatch = false) {
+async function findLoginLinks(session, exactMatch = false, log = null) {
+    let fathomtest = await session.send('Runtime.evaluate', { expression: "fathom", returnByValue: false });
+    log(`fathomtest(login): ${JSON.stringify(fathomtest)}`)      
     const loginRegexSrc = exactMatch ? combinedLoginLinkRegexExactSrc : combinedLoginLinkRegexLooseSrc;
-    const result = await evaluateInSession(session, _buildScript(findLoginLinksJS, loginRegexSrc));
+    const result = await evaluateInSession(session, _buildScript(findLoginLinksJS, loginRegexSrc, log));
     return result || [];
 }
 
@@ -138,7 +147,7 @@ async function findLoginLinks(session, exactMatch = false) {
  * Get deduplicated, sorted login/register link attributes from all match strategies.
  *
  * @param {object} session - CDP session (fathom must be injected)
- * @param {function} log
+ * @param {function|null} log
  * @returns {Promise<ElementAttributes[]>}
  */
 async function getLoginLinkAttrs(session, log) {
@@ -154,9 +163,9 @@ async function getLoginLinkAttrs(session, log) {
     for (const matchType of linkMatchTypes) {
         let links;
         if (matchType === 'coords') {
-            links = await findLoginLinksByCoords(session);
+            links = await findLoginLinksByCoords(session, log);
         } else {
-            links = await findLoginLinks(session, matchType === 'exact');
+            links = await findLoginLinks(session, matchType === 'exact', log);
         }
 
         // tag each result with its matchType
