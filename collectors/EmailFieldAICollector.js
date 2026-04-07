@@ -4,7 +4,6 @@ const fs = require('fs');
 const fathomSrc = fs.readFileSync(path.join(__dirname, '..', 'helpers', 'emailAIHelpers', 'browserJS', 'fathomDetect.js'), 'utf8');
 const pageUtils = require('../helpers/emailAIHelpers/utils.js');
 const tldts = require('tldts');
-const {createTimer} = require('../helpers/timer');
 
 // ── tuneable constants ────────────────────────────────────────────────────────
 const NUM_LOGIN_REGISTER_LINKS_TO_CLICK = 10;
