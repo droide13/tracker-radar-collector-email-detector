@@ -1,7 +1,7 @@
 const BaseCollector = require('./BaseCollector');
 const path = require('path');
 const fs = require('fs');
-const fathomSrc = fs.readFileSync(path.join(__dirname, '..', 'helpers', 'emailAIHelpers', 'browserJS', 'fathomDetect.js'), 'utf8');
+const fathomSrc = fs.readFileSync(path.join(__dirname, '.', 'emailAI', 'browserJS', 'fathomDetect.js'), 'utf8');
 const pageUtils = require('./emailAI/utils.js');
 const tldts = require('tldts');
 
