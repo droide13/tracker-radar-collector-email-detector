@@ -78,7 +78,7 @@ const {
     SCORE,
     HIGH_CONFIDENCE_GAP,
     MED_CONFIDENCE_GAP,
-} = require('../helpers/emailHeuristicHelpers/emailFieldConstants');
+} = require('./emailHeuristic/emailFieldConstants');
 
 // ── Browser-side scripts loaded from disk ────────────────────────────────────
 const HELPERS_DIR = path.join(__dirname, '../helpers/emailHeuristicHelpers');
