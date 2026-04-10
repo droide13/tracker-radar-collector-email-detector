@@ -51,9 +51,9 @@ const chalk = require('chalk');
 const BaseCollector = require('./BaseCollector');
 const chromeHar = require('chrome-har');
 
-const { OBSERVED_EVENTS, NETWORK_TARGET_TYPES } = require('./har/harEvents');
-const { registerBodyFetching, drainPendingFetches, stitchResponseBodies } = require('./har/harResponseBody');
-const { enrichPostDataParams, enrichInitiator } = require('./har/harEnrich');
+const { OBSERVED_EVENTS, NETWORK_TARGET_TYPES } = require('./Har/harEvents');
+const { registerBodyFetching, drainPendingFetches, stitchResponseBodies } = require('./Har/harResponseBody');
+const { enrichPostDataParams, enrichInitiator } = require('./Har/harEnrich');
 
 // Purple log prefix — distinct from the green/yellow/red used by other collectors
 const HAR = chalk.magenta('[har]');
@@ -122,7 +122,7 @@ class HarCollector extends BaseCollector {
          * CDP guarantees requestId uniqueness across all targets in a context,
          * so a single flat map is safe even when merging multiple sessions.
          *
-         * @type {Map<string, import('./har/harResponseBody').StoredResponseBody>}
+         * @type {Map<string, import('./Har/harResponseBody').StoredResponseBody>}
          */
         this._responseBodies = new Map();
 

@@ -1,8 +1,8 @@
 const BaseCollector = require('./BaseCollector');
 const path = require('path');
 const fs = require('fs');
-const fathomSrc = fs.readFileSync(path.join(__dirname, '.', 'emailAI', 'browserJS', 'fathomDetect.js'), 'utf8');
-const pageUtils = require('./emailAI/utils.js');
+const fathomSrc = fs.readFileSync(path.join(__dirname, '.', 'EmailAI', 'browserJS', 'fathomDetect.js'), 'utf8');
+const pageUtils = require('./EmailAI/utils.js');
 const tldts = require('tldts');
 
 // ── tuneable constants ────────────────────────────────────────────────────────

@@ -1,5 +1,4 @@
 (async () => {
-
     // ── Config ────────────────────────────────────────────────────────────
 
     /**
@@ -8,30 +7,31 @@
      * Treat them as candidate email fields and let context decide.
      */
     const LOGIN_FIELD_PATTERNS = [
-        /^login$/i, /^username$/i, /^user$/i,
-        /^account$/i, /^accountname$/i,
-        /^credential$/i, /^identifier$/i,
-        /^логин$/i, /^пользователь/i,         // Russian
-        /^kirish$/i,                            // Uzbek "entrance/login"
+        /^login$/i,
+        /^username$/i,
+        /^user$/i,
+        /^account$/i,
+        /^accountname$/i,
+        /^credential$/i,
+        /^identifier$/i,
+        /^логин$/i,
+        /^пользователь/i, // Russian
+        /^kirish$/i, // Uzbek "entrance/login"
     ];
 
     /**
      * Multilingual email keywords for attribute-level matching.
      * IMPORTANT: Do NOT rely on CSS `i` flag for non-ASCII — do JS matching instead.
      */
-    const EMAIL_ATTR_KEYWORDS = [
-        'email', 'e-mail', 'mail',
-        'correo', 'courriel',
-        'eposta', 'e-posta',
-        'почта', 'эл.почта',
-    ];
+    const EMAIL_ATTR_KEYWORDS = ['email', 'e-mail', 'mail', 'correo', 'courriel', 'eposta', 'e-posta', 'почта', 'эл.почта'];
 
     /**
      * Regex patterns for label / placeholder / visible text matching.
      * These handle multi-word phrases and non-ASCII scripts.
      */
     const EMAIL_TEXT_PATTERNS = [
-        /\bemail\b/i, /\be-mail\b/i,
+        /\bemail\b/i,
+        /\be-mail\b/i,
         /correo\s+electr[oó]nico/i,
         /adresse\s+e-?mail/i,
         /e-mail-adresse/i,
@@ -64,7 +64,9 @@
         try {
             const r = el.getBoundingClientRect();
             return r.width > 0 && r.height > 0;
-        } catch { return false; }
+        } catch {
+            return false;
+        }
     }
 
     function emailFieldMeta(input, index, reason) {
@@ -75,7 +77,7 @@
             placeholder: input.placeholder || '',
             autocomplete: input.autocomplete || '',
             visible: isVisible(input),
-            detectionReason: reason,   // ← helps you debug which rule fired
+            detectionReason: reason, // ← helps you debug which rule fired
         };
     }
 
@@ -84,10 +86,12 @@
         if (input.getAttribute('aria-label')) return input.getAttribute('aria-label');
         const lbId = input.getAttribute('aria-labelledby');
         if (lbId) {
-            const parts = lbId.trim().split(/\s+/)
-                .map(id => document.getElementById(id))
+            const parts = lbId
+                .trim()
+                .split(/\s+/)
+                .map((id) => document.getElementById(id))
                 .filter(Boolean)
-                .map(el => visibleText(el));
+                .map((el) => visibleText(el));
             if (parts.length) return parts.join(' ');
         }
         if (input.id) {
@@ -110,13 +114,13 @@
     function attrMatchesEmail(str) {
         if (!str) return false;
         const low = str.toLowerCase();
-        return EMAIL_ATTR_KEYWORDS.some(k => low.includes(k));
+        return EMAIL_ATTR_KEYWORDS.some((k) => low.includes(k));
     }
 
     /** Check any freeform text (label, placeholder, aria) against multilingual patterns. */
     function textMatchesEmail(str) {
         if (!str) return false;
-        return EMAIL_TEXT_PATTERNS.some(re => re.test(str));
+        return EMAIL_TEXT_PATTERNS.some((re) => re.test(str));
     }
 
     /**
@@ -139,28 +143,24 @@
         const ac = (input.autocomplete || '').toLowerCase();
         if (ac.includes('email') || ac === 'username') return 'autocomplete';
 
-        if (attrMatchesEmail(input.name) || attrMatchesEmail(input.id))
-            return 'attr-name/id';
+        if (attrMatchesEmail(input.name) || attrMatchesEmail(input.id)) return 'attr-name/id';
 
         const ph = input.placeholder || '';
-        if (attrMatchesEmail(ph) || textMatchesEmail(ph))
-            return 'placeholder';
+        if (attrMatchesEmail(ph) || textMatchesEmail(ph)) return 'placeholder';
 
         const labelText = getLabelText(input);
-        if (textMatchesEmail(labelText))
-            return 'label-text';
+        if (textMatchesEmail(labelText)) return 'label-text';
 
         // Generic "login" field — flag it but mark reason so caller can filter
-        if (LOGIN_FIELD_PATTERNS.some(re =>
-            re.test(input.name) || re.test(input.id) || re.test(ph) || re.test(labelText)
-        )) return 'login-field';
+        if (LOGIN_FIELD_PATTERNS.some((re) => re.test(input.name) || re.test(input.id) || re.test(ph) || re.test(labelText)))
+            return 'login-field';
 
         return null;
     }
 
     // ── Build orphan selector (ASCII keywords only — CSS `i` flag is ASCII-only) ──
     function buildOrphanSelector() {
-        const attrChecks = EMAIL_ATTR_KEYWORDS.flatMap(k => [
+        const attrChecks = EMAIL_ATTR_KEYWORDS.flatMap((k) => [
             `input[name*="${k}" i]`,
             `input[id*="${k}" i]`,
             `input[placeholder*="${k}" i]`,
@@ -172,27 +172,25 @@
     const results = [];
 
     Array.from(document.forms).forEach((form, formIndex) => {
-        const inputs = Array.from(form.elements).filter(
-            el => el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'
-        );
+        const inputs = Array.from(form.elements).filter((el) => el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
 
-        const classified = inputs.map((el, i) => {
-            const reason = emailInputReason(el);
-            return reason ? { meta: emailFieldMeta(el, i, reason), reason } : null;
-        }).filter(Boolean);
+        const classified = inputs
+            .map((el, i) => {
+                const reason = emailInputReason(el);
+                return reason ? { meta: emailFieldMeta(el, i, reason), reason } : null;
+            })
+            .filter(Boolean);
 
         if (classified.length === 0) return;
 
         // If a proper email field (reason !== 'login-field') exists, drop bare login fields
-        const hasProperEmail = classified.some(c => c.reason !== 'login-field');
+        const hasProperEmail = classified.some((c) => c.reason !== 'login-field');
         const emailFields = hasProperEmail
-            ? classified.filter(c => c.reason !== 'login-field').map(c => c.meta)
-            : classified.map(c => c.meta);  // only login-type fields found, keep them
+            ? classified.filter((c) => c.reason !== 'login-field').map((c) => c.meta)
+            : classified.map((c) => c.meta); // only login-type fields found, keep them
 
-        const hasPassword = inputs.some(el => (el.type || '').toLowerCase() === 'password');
-        const submitEls = Array.from(
-            form.querySelectorAll('button[type=submit], input[type=submit], button:not([type]), [role=button]')
-        );
+        const hasPassword = inputs.some((el) => (el.type || '').toLowerCase() === 'password');
+        const submitEls = Array.from(form.querySelectorAll('button[type=submit], input[type=submit], button:not([type]), [role=button]'));
 
         results.push({
             formIndex,
@@ -201,36 +199,37 @@
             id: form.id || '',
             classes: form.className || '',
             labels: [visibleText(form)].filter(Boolean),
-            inputSummary: inputs.map(el => (el.type || el.tagName).toLowerCase() + ':' + (el.name || el.id || '')),
+            inputSummary: inputs.map((el) => (el.type || el.tagName).toLowerCase() + ':' + (el.name || el.id || '')),
             hasPassword,
-            submitTexts: submitEls.map(el => visibleText(el)).filter(Boolean),
+            submitTexts: submitEls.map((el) => visibleText(el)).filter(Boolean),
             emailFields,
         });
     });
 
     // ── Orphan inputs ─────────────────────────────────────────────────────
-    const inForm = new Set(Array.from(document.forms).flatMap(f => Array.from(f.elements)));
+    const inForm = new Set(Array.from(document.forms).flatMap((f) => Array.from(f.elements)));
 
     // CSS selector handles ASCII keywords
-    const orphanCandidates = new Set(
-        Array.from(document.querySelectorAll(buildOrphanSelector()))
-    );
+    const orphanCandidates = new Set(Array.from(document.querySelectorAll(buildOrphanSelector())));
 
     // JS pass handles non-ASCII (Japanese, Arabic, CJK, etc.) and label-text matches
-    document.querySelectorAll('input:not([type=hidden])').forEach(input => {
+    document.querySelectorAll('input:not([type=hidden])').forEach((input) => {
         if (!inForm.has(input) && emailInputReason(input)) {
             orphanCandidates.add(input);
         }
     });
 
-    const orphans = [...orphanCandidates].filter(el => !inForm.has(el));
+    const orphans = [...orphanCandidates].filter((el) => !inForm.has(el));
 
     if (orphans.length > 0) {
         results.push({
             formIndex: -1,
-            action: '', method: '', id: '', classes: '',
+            action: '',
+            method: '',
+            id: '',
+            classes: '',
             labels: [],
-            inputSummary: orphans.map(el => 'email:' + (el.name || el.id || '')),
+            inputSummary: orphans.map((el) => 'email:' + (el.name || el.id || '')),
             hasPassword: false,
             submitTexts: [],
             emailFields: orphans.map((el, i) => {

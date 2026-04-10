@@ -1,20 +1,21 @@
-/* Adapted from leaky forms emailPasswordField collector 
-*  https://github.com/leaky-forms/leaky-forms-crawler
-*/
-
+/* Adapted from leaky forms emailPasswordField collector
+ *  https://github.com/leaky-forms/leaky-forms-crawler
+ */
 
 // Fathom: https://mozilla.github.io/fathom/intro.html
-// Fathom is a supervised-learning system for recognizing parts of web pages—pop-ups, address forms, slideshows—or for classifying a page as a whole. 
+// Fathom is a supervised-learning system for recognizing parts of web pages—pop-ups, address forms, slideshows—or for classifying a page as a whole.
 // This email field classifier was taken from Mozilla's Password Manager Module
 /* eslint-disable  */
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = global || self, factory(global.fathom = {}));
-}(this, (function (exports) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined'
+        ? factory(exports)
+        : typeof define === 'function' && define.amd
+          ? define(['exports'], factory)
+          : ((global = global || self), factory((global.fathom = {})));
+})(this, function (exports) {
+    'use strict';
 
-    class CycleError extends Error {
-    }
+    class CycleError extends Error {}
 
     /**
      * Return the passed-in arg. Useful as a default.
@@ -36,16 +37,14 @@
     function best(iterable, by, isBetter) {
         let bestSoFar, bestKeySoFar;
         let isFirst = true;
-        forEach(
-            function (item) {
-                const key = by(item);
-                if (isBetter(key, bestKeySoFar) || isFirst) {
-                    bestSoFar = item;
-                    bestKeySoFar = key;
-                    isFirst = false;
-                }
-            },
-            iterable);
+        forEach(function (item) {
+            const key = by(item);
+            if (isBetter(key, bestKeySoFar) || isFirst) {
+                bestSoFar = item;
+                bestKeySoFar = key;
+                isFirst = false;
+            }
+        }, iterable);
         if (isFirst) {
             throw new Error('Tried to call best() on empty iterable');
         }
@@ -74,18 +73,16 @@
         let bests = [];
         let bestKeySoFar;
         let isFirst = true;
-        forEach(
-            function (item) {
-                const key = by(item);
-                if (key > bestKeySoFar || isFirst) {
-                    bests = [item];
-                    bestKeySoFar = key;
-                    isFirst = false;
-                } else if (key === bestKeySoFar) {
-                    bests.push(item);
-                }
-            },
-            iterable);
+        forEach(function (item) {
+            const key = by(item);
+            if (key > bestKeySoFar || isFirst) {
+                bests = [item];
+                bestKeySoFar = key;
+                isFirst = false;
+            } else if (key === bestKeySoFar) {
+                bests.push(item);
+            }
+        }, iterable);
         return bests;
     }
 
@@ -104,16 +101,14 @@
     function sum(iterable) {
         let total;
         let isFirst = true;
-        forEach(
-            function assignOrAdd(addend) {
-                if (isFirst) {
-                    total = addend;
-                    isFirst = false;
-                } else {
-                    total += addend;
-                }
-            },
-            iterable);
+        forEach(function assignOrAdd(addend) {
+            if (isFirst) {
+                total = addend;
+                isFirst = false;
+            } else {
+                total += addend;
+            }
+        }, iterable);
         return total;
     }
 
@@ -135,7 +130,7 @@
      * @arg shouldTraverse {function} Given a node, say whether we should
      *     include it and its children. Default: always true.
      */
-    function *walk(element, shouldTraverse = element => true) {
+    function* walk(element, shouldTraverse = (element) => true) {
         yield element;
         for (let child of element.childNodes) {
             if (shouldTraverse(child)) {
@@ -146,12 +141,44 @@
         }
     }
 
-    const blockTags = new Set(
-        ['ADDRESS', 'BLOCKQUOTE', 'BODY', 'CENTER', 'DIR', 'DIV', 'DL',
-         'FIELDSET', 'FORM', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR',
-         'ISINDEX', 'MENU', 'NOFRAMES', 'NOSCRIPT', 'OL', 'P', 'PRE',
-         'TABLE', 'UL', 'DD', 'DT', 'FRAMESET', 'LI', 'TBODY', 'TD',
-         'TFOOT', 'TH', 'THEAD', 'TR', 'HTML']);
+    const blockTags = new Set([
+        'ADDRESS',
+        'BLOCKQUOTE',
+        'BODY',
+        'CENTER',
+        'DIR',
+        'DIV',
+        'DL',
+        'FIELDSET',
+        'FORM',
+        'H1',
+        'H2',
+        'H3',
+        'H4',
+        'H5',
+        'H6',
+        'HR',
+        'ISINDEX',
+        'MENU',
+        'NOFRAMES',
+        'NOSCRIPT',
+        'OL',
+        'P',
+        'PRE',
+        'TABLE',
+        'UL',
+        'DD',
+        'DT',
+        'FRAMESET',
+        'LI',
+        'TBODY',
+        'TD',
+        'TFOOT',
+        'TH',
+        'THEAD',
+        'TR',
+        'HTML',
+    ]);
     /**
      * Return whether a DOM element is a block element by default (rather than by
      * styling).
@@ -167,14 +194,13 @@
      * @arg shouldTraverse {function} Specify additional elements to exclude by
      *     returning false
      */
-    function *inlineTexts(element, shouldTraverse = element => true) {
+    function* inlineTexts(element, shouldTraverse = (element) => true) {
         // TODO: Could we just use querySelectorAll() with a really long
         // selector rather than walk(), for speed?
-        for (let child of walk(element,
-                               element => !(isBlock(element) ||
-                                            element.tagName === 'SCRIPT' &&
-                                            element.tagName === 'STYLE')
-                                          && shouldTraverse(element))) {
+        for (let child of walk(
+            element,
+            (element) => !(isBlock(element) || (element.tagName === 'SCRIPT' && element.tagName === 'STYLE')) && shouldTraverse(element),
+        )) {
             if (child.nodeType === child.TEXT_NODE) {
                 // wholeText() is not implemented by jsdom, so we use
                 // textContent(). The result should be the same, since
@@ -193,9 +219,8 @@
      * @arg shouldTraverse {function} Specify additional elements to exclude by
      *     returning false
      */
-    function inlineTextLength(element, shouldTraverse = element => true) {
-        return sum(map(text => collapseWhitespace(text).length,
-                       inlineTexts(element, shouldTraverse)));
+    function inlineTextLength(element, shouldTraverse = (element) => true) {
+        return sum(map((text) => collapseWhitespace(text).length, inlineTexts(element, shouldTraverse)));
     }
 
     /**
@@ -216,8 +241,7 @@
         if (inlineLength === undefined) {
             inlineLength = inlineTextLength(fnode.element);
         }
-        const lengthWithoutLinks = inlineTextLength(fnode.element,
-                                                    element => element.tagName !== 'A');
+        const lengthWithoutLinks = inlineTextLength(fnode.element, (element) => element.tagName !== 'A');
         return (inlineLength - lengthWithoutLinks) / inlineLength;
     }
 
@@ -225,8 +249,7 @@
      * Return whether an element is a text node that consist wholly of whitespace.
      */
     function isWhitespace(element) {
-        return (element.nodeType === element.TEXT_NODE &&
-                element.textContent.trim().length === 0);
+        return element.nodeType === element.TEXT_NODE && element.textContent.trim().length === 0;
     }
 
     /**
@@ -254,7 +277,7 @@
     /**
      * Return an backward iterator over an Array.
      */
-    function *reversed(array) {
+    function* reversed(array) {
         for (let i = array.length - 1; i >= 0; i--) {
             yield array[i];
         }
@@ -450,7 +473,7 @@
      * @return Whether any of the attribute values satisfy the predicate function
      */
     function attributesMatch(element, predicate, attrs = []) {
-        const attributes = attrs.length === 0 ? Array.from(element.attributes).map(a => a.name) : attrs;
+        const attributes = attrs.length === 0 ? Array.from(element.attributes).map((a) => a.name) : attrs;
         for (let i = 0; i < attributes.length; i++) {
             const attr = element.getAttribute(attributes[i]);
             // If the attribute is an array, apply the scoring function to each element
@@ -465,7 +488,7 @@
     /**
      * Yield an element and each of its ancestors.
      */
-    function *ancestors(element) {
+    function* ancestors(element) {
         yield element;
         let parent;
         while ((parent = element.parentNode) !== null && parent.nodeType === parent.ELEMENT_NODE) {
@@ -508,9 +531,7 @@
             return false;
         }
         // Check if the element is irrevocably off-screen:
-        if (elementRect.x + elementRect.width < 0 ||
-            elementRect.y + elementRect.height < 0
-        ) {
+        if (elementRect.x + elementRect.width < 0 || elementRect.y + elementRect.height < 0) {
             return false;
         }
         for (const ancestor of ancestors(element)) {
@@ -555,9 +576,9 @@
         const cMin = Math.min(r, g, b);
         const delta = cMax - cMin;
         const lightness = (cMax + cMin) / 2;
-        const denom = (1 - (Math.abs(2 * lightness - 1)));
+        const denom = 1 - Math.abs(2 * lightness - 1);
         // Return 0 if it's black (R, G, and B all 0).
-        return (denom === 0) ? 0 : delta / denom;
+        return denom === 0 ? 0 : delta / denom;
     }
 
     /**
@@ -593,10 +614,10 @@
      * Flatten out an iterable of iterables into a single iterable of non-
      * iterables. Does not consider strings to be iterable.
      */
-    function *flatten(iterable) {
+    function* flatten(iterable) {
         for (const i of iterable) {
             if (typeof i !== 'string' && isIterable(i)) {
-                yield *(flatten(i));
+                yield* flatten(i);
             } else {
                 yield i;
             }
@@ -606,7 +627,7 @@
     /**
      * A lazy, top-level ``Array.map()`` workalike that works on anything iterable
      */
-    function *map(fn, iterable) {
+    function* map(fn, iterable) {
         for (const i of iterable) {
             yield fn(i);
         }
@@ -626,7 +647,7 @@
         return thing && typeof thing[Symbol.iterator] === 'function';
     }
 
-    var utilsForFrontend = /*#__PURE__*/Object.freeze({
+    var utilsForFrontend = /*#__PURE__*/ Object.freeze({
         __proto__: null,
         identity: identity,
         best: best,
@@ -663,7 +684,7 @@
         linearScale: linearScale,
         flatten: flatten,
         map: map,
-        forEach: forEach
+        forEach: forEach,
     });
 
     /**
@@ -680,12 +701,12 @@
         let shouldContinue = sibling && sibling !== right;
         while (shouldContinue) {
             sibling = sibling.nextSibling;
-            if ((shouldContinue = sibling && sibling !== right) &&
-                !isWhitespace(sibling)) {
+            if ((shouldContinue = sibling && sibling !== right) && !isWhitespace(sibling)) {
                 num += 1;
             }
         }
-        if (sibling !== right) {  // Don't double-punish if left and right are siblings.
+        if (sibling !== right) {
+            // Don't double-punish if left and right are siblings.
             // Walk left from right node:
             sibling = right;
             while (sibling) {
@@ -731,13 +752,11 @@
      *    nodes.
      *
      */
-    function distance(fnodeA,
-                             fnodeB,
-                             {differentDepthCost = 2,
-                              differentTagCost = 2,
-                              sameTagCost = 1,
-                              strideCost = 1,
-                              additionalCost = (fnodeA, fnodeB) => 0} = {}) {
+    function distance(
+        fnodeA,
+        fnodeB,
+        { differentDepthCost = 2, differentTagCost = 2, sameTagCost = 1, strideCost = 1, additionalCost = (fnodeA, fnodeB) => 0 } = {},
+    ) {
         // I was thinking of something that adds little cost for siblings. Up
         // should probably be more expensive than down (see middle example in the
         // Nokia paper).
@@ -759,7 +778,8 @@
         let bAncestor = elementB;
 
         // Ascend to common parent, stacking them up for later reference:
-        while (!aAncestor.contains(elementB)) {  // Note: an element does contain() itself.
+        while (!aAncestor.contains(elementB)) {
+            // Note: an element does contain() itself.
             aAncestor = aAncestor.parentNode;
             aAncestors.push(aAncestor); //aAncestors = [a, b]. aAncestor = b // if a is outer: no loop here; aAncestors = [a]. aAncestor = a.
         }
@@ -777,7 +797,7 @@
         // Make an ancestor stack for the right node too so we can walk
         // efficiently down to it:
         do {
-            bAncestor = bAncestor.parentNode;  // Assumes we've early-returned above if A === B. This walks upward from the outer node and up out of the tree. It STARTS OUT with aAncestor === bAncestor!
+            bAncestor = bAncestor.parentNode; // Assumes we've early-returned above if A === B. This walks upward from the outer node and up out of the tree. It STARTS OUT with aAncestor === bAncestor!
             bAncestors.push(bAncestor);
         } while (bAncestor !== aAncestor);
 
@@ -846,8 +866,7 @@
         const elementB = toDomElement(fnodeB);
         const aRect = elementA.getBoundingClientRect();
         const bRect = elementB.getBoundingClientRect();
-        return Math.sqrt((xCenter(aRect) - xCenter(bRect)) ** 2 +
-                         (yCenter(aRect) - yCenter(bRect)) ** 2);
+        return Math.sqrt((xCenter(aRect) - xCenter(bRect)) ** 2 + (yCenter(aRect) - yCenter(bRect)) ** 2);
     }
 
     /** A lower-triangular matrix of inter-cluster distances */
@@ -875,14 +894,13 @@
             this._matrix = new Map();
 
             // Convert elements to clusters:
-            const clusters = elements.map(el => [el]);
+            const clusters = elements.map((el) => [el]);
 
             // Init matrix:
             for (let outerCluster of clusters) {
                 const innerMap = new Map();
                 for (let innerCluster of this._matrix.keys()) {
-                    innerMap.set(innerCluster, distance(outerCluster[0],
-                                                        innerCluster[0]));
+                    innerMap.set(innerCluster, distance(outerCluster[0], innerCluster[0]));
                 }
                 this._matrix.set(outerCluster, innerMap);
             }
@@ -903,14 +921,14 @@
                 const ret = [];
                 for (let [outerKey, row] of self._matrix.entries()) {
                     for (let [innerKey, storedDistance] of row.entries()) {
-                        ret.push({a: outerKey, b: innerKey, distance: storedDistance});
+                        ret.push({ a: outerKey, b: innerKey, distance: storedDistance });
                     }
                 }
                 return ret;
             }
             // Optimizing this by inlining the loop and writing it less
             // functionally doesn't help:
-            return min(clustersAndDistances(), x => x.distance);
+            return min(clustersAndDistances(), (x) => x.distance);
         }
 
         // Look up the distance between 2 clusters in me. Try the lookup in the
@@ -952,8 +970,7 @@
             const newRow = new Map();
             for (let outerKey of this._matrix.keys()) {
                 if (outerKey !== clusterA && outerKey !== clusterB) {
-                    newRow.set(outerKey, Math.min(this._cachedDistance(clusterA, outerKey),
-                                                  this._cachedDistance(clusterB, outerKey)));
+                    newRow.set(outerKey, Math.min(this._cachedDistance(clusterA, outerKey), this._cachedDistance(clusterB, outerKey)));
                 }
             }
 
@@ -981,7 +998,7 @@
         // Return an Array of nodes for each cluster in me.
         clusters() {
             // TODO: Can't get map to work here. Don't know why.
-            return Array.from(this._matrix.keys()).map(e => Array.from(flatten(e)));
+            return Array.from(this._matrix.keys()).map((e) => Array.from(flatten(e)));
         }
     }
 
@@ -1019,15 +1036,14 @@
         return matrix.clusters();
     }
 
-    var clusters$1 = /*#__PURE__*/Object.freeze({
+    var clusters$1 = /*#__PURE__*/ Object.freeze({
         __proto__: null,
         distance: distance,
         euclidean: euclidean,
-        clusters: clusters
+        clusters: clusters,
     });
 
     // The left-hand side of a rule
-
 
     /**
      * Take nodes that match a given DOM selector. Example:
@@ -1204,9 +1220,7 @@
         }
 
         fnodes(ruleset) {
-            return this._domNodesToFilteredFnodes(
-                ruleset,
-                ruleset.doc.querySelectorAll(this.selector));
+            return this._domNodesToFilteredFnodes(ruleset, ruleset.doc.querySelectorAll(this.selector));
         }
 
         /**
@@ -1223,7 +1237,9 @@
 
         checkFact(fact) {
             if (fact.type === undefined) {
-                throw new Error(`The right-hand side of a ${this._callName()}() rule failed to specify a type. This means there is no way for its output to be used by later rules. All it specified was ${fact}.`);
+                throw new Error(
+                    `The right-hand side of a ${this._callName()}() rule failed to specify a type. This means there is no way for its output to be used by later rules. All it specified was ${fact}.`,
+                );
             }
         }
 
@@ -1246,9 +1262,7 @@
         }
 
         fnodes(ruleset) {
-            return this._domNodesToFilteredFnodes(
-                ruleset,
-                ruleset.doc.matches(this.selector) ? [ruleset.doc] : []);
+            return this._domNodesToFilteredFnodes(ruleset, ruleset.doc.matches(this.selector) ? [ruleset.doc] : []);
         }
     }
 
@@ -1259,7 +1273,7 @@
             if (type === undefined) {
                 throw new Error('A type name is required when calling type().');
             }
-            this._type = type;  // the input type
+            this._type = type; // the input type
         }
 
         clone() {
@@ -1354,19 +1368,16 @@
             // https://stackoverflow.com/questions/32943776/using-super-within-an-
             // arrow-function-within-an-arrow-function-within-a-method
             const getSuperFnodes = () => super.fnodes(ruleset);
-            return setDefault(
-                ruleset.maxCache,
-                this._type,
-                function maxFnodesOfType() {
-                    return maxes(getSuperFnodes(), fnode => ruleset.weightedScore(fnode.scoresSoFarFor(self._type)));
-                });
+            return setDefault(ruleset.maxCache, this._type, function maxFnodesOfType() {
+                return maxes(getSuperFnodes(), (fnode) => ruleset.weightedScore(fnode.scoresSoFarFor(self._type)));
+            });
         }
     }
 
     class BestClusterLhs extends AggregateTypeLhs {
         constructor(type, options) {
             super(type);
-            this._options = options || {splittingDistance: 3};
+            this._options = options || { splittingDistance: 3 };
         }
 
         /**
@@ -1380,16 +1391,11 @@
                 return [];
             }
             // Cluster them:
-            const clusts = clusters(
-                fnodesOfType,
-                this._options.splittingDistance,
-                (a, b) => distance(a, b, this._options));
+            const clusts = clusters(fnodesOfType, this._options.splittingDistance, (a, b) => distance(a, b, this._options));
             // Tag each cluster with the total of its nodes' scores:
-            const clustsAndSums = clusts.map(
-                clust => [clust,
-                          sum(clust.map(fnode => fnode.scoreFor(this._type)))]);
+            const clustsAndSums = clusts.map((clust) => [clust, sum(clust.map((fnode) => fnode.scoreFor(this._type)))]);
             // Return the highest-scoring cluster:
-            return max(clustsAndSums, clustAndSum => clustAndSum[1])[0];
+            return max(clustsAndSums, (clustAndSum) => clustAndSum[1])[0];
         }
     }
 
@@ -1424,7 +1430,7 @@
         }
 
         typesMentioned() {
-            return new NiceSet(this._args.map(arg => arg.guaranteedType()));
+            return new NiceSet(this._args.map((arg) => arg.guaranteedType()));
         }
     }
 
@@ -1468,17 +1474,19 @@
             if (bs.length > 0) {
                 // If bs is empty, there can be no nearest nodes, so don't emit any.
                 for (const a of as_) {
-                    const nearest = min(bs, b => this._distance(a, b));
-                    yield {fnode: a,
-                           rhsTransformer: function setNoteIfEmpty(fact) {
-                               // If note is explicitly set by the RHS, let it take
-                               // precedence, even though that makes this entire LHS
-                               // pointless.
-                               if (fact.note === undefined) {
-                                   fact.note = nearest;  // TODO: Wrap this in an object to make room to return distance later.
-                               }
-                               return fact;
-                           }};
+                    const nearest = min(bs, (b) => this._distance(a, b));
+                    yield {
+                        fnode: a,
+                        rhsTransformer: function setNoteIfEmpty(fact) {
+                            // If note is explicitly set by the RHS, let it take
+                            // precedence, even though that makes this entire LHS
+                            // pointless.
+                            if (fact.note === undefined) {
+                                fact.note = nearest; // TODO: Wrap this in an object to make room to return distance later.
+                            }
+                            return fact;
+                        },
+                    };
                 }
             }
         }
@@ -1492,8 +1500,7 @@
         }
 
         typesMentioned() {
-            return new NiceSet([this._a.guaranteedType(),
-                                this._b.guaranteedType()]);
+            return new NiceSet([this._a.guaranteedType(), this._b.guaranteedType()]);
         }
 
         guaranteedType() {
@@ -1503,7 +1510,6 @@
 
     // The right-hand side of a rule
 
-
     const TYPE = 1;
     const NOTE = 2;
     const SCORE = 4;
@@ -1512,7 +1518,7 @@
         type: TYPE,
         note: NOTE,
         score: SCORE,
-        element: ELEMENT
+        element: ELEMENT,
     };
 
     /**
@@ -1529,8 +1535,8 @@
     class InwardRhs {
         constructor(calls = [], max = Infinity, types) {
             this._calls = calls.slice();
-            this._max = max;  // max score
-            this._types = new NiceSet(types);  // empty set if unconstrained
+            this._max = max; // max score
+            this._types = new NiceSet(types); // empty set if unconstrained
         }
 
         /**
@@ -1554,21 +1560,21 @@
         }
 
         /**
-          * Determine any of type, note, score, and element using a callback. This
-          * overrides any previous call to `props` and, depending on what
-          * properties of the callback's return value are filled out, may override
-          * the effects of other previous calls as well.
-          *
-          * The callback should return...
-          *
-          * * An optional :term:`subscore`
-          * * A type (required on ``dom(...)`` rules, defaulting to the input one on
-          *   ``type(...)`` rules)
-          * * Optional notes
-          * * An element, defaulting to the input one. Overriding the default
-          *   enables a callback to walk around the tree and say things about nodes
-          *   other than the input one.
-          */
+         * Determine any of type, note, score, and element using a callback. This
+         * overrides any previous call to `props` and, depending on what
+         * properties of the callback's return value are filled out, may override
+         * the effects of other previous calls as well.
+         *
+         * The callback should return...
+         *
+         * * An optional :term:`subscore`
+         * * A type (required on ``dom(...)`` rules, defaulting to the input one on
+         *   ``type(...)`` rules)
+         * * Optional notes
+         * * An element, defaulting to the input one. Overriding the default
+         *   enables a callback to walk around the tree and say things about nodes
+         *   other than the input one.
+         */
         props(callback) {
             function getSubfacts(fnode) {
                 const subfacts = callback(fnode);
@@ -1587,9 +1593,7 @@
             // Thse are the subfacts this call could affect:
             getSubfacts.possibleSubfacts = TYPE | NOTE | SCORE | ELEMENT;
             getSubfacts.kind = 'props';
-            return new this.constructor(this._calls.concat(getSubfacts),
-                                        this._max,
-                                        this._types);
+            return new this.constructor(this._calls.concat(getSubfacts), this._max, this._types);
         }
 
         /**
@@ -1603,14 +1607,12 @@
 
             // Actually emit a given type.
             function getSubfacts() {
-                return {type: theType};
+                return { type: theType };
             }
             getSubfacts.possibleSubfacts = TYPE;
             getSubfacts.type = theType;
             getSubfacts.kind = 'type';
-            return new this.constructor(this._calls.concat(getSubfacts),
-                                        this._max,
-                                        this._types);
+            return new this.constructor(this._calls.concat(getSubfacts), this._max, this._types);
         }
 
         /**
@@ -1631,9 +1633,7 @@
             // override each other, and the rules get complicated. Plus you can't
             // inherit a type constraint and then sub in another type-returning
             // function that still gets the constraint applied.
-            return new this.constructor(this._calls,
-                                        this._max,
-                                        types);
+            return new this.constructor(this._calls, this._max, types);
         }
 
         /**
@@ -1646,10 +1646,14 @@
             if (this._types.size > 0) {
                 if (result.type === undefined) {
                     if (!this._types.has(leftType)) {
-                        throw new Error(`A right-hand side claimed, via typeIn(...) to emit one of the types ${this._types} but actually inherited ${leftType} from the left-hand side.`);
+                        throw new Error(
+                            `A right-hand side claimed, via typeIn(...) to emit one of the types ${this._types} but actually inherited ${leftType} from the left-hand side.`,
+                        );
                     }
                 } else if (!this._types.has(result.type)) {
-                    throw new Error(`A right-hand side claimed, via typeIn(...) to emit one of the types ${this._types} but actually emitted ${result.type}.`);
+                    throw new Error(
+                        `A right-hand side claimed, via typeIn(...) to emit one of the types ${this._types} but actually emitted ${result.type}.`,
+                    );
                 }
             }
         }
@@ -1660,13 +1664,11 @@
          */
         note(callback) {
             function getSubfacts(fnode) {
-                return {note: callback(fnode)};
+                return { note: callback(fnode) };
             }
             getSubfacts.possibleSubfacts = NOTE;
             getSubfacts.kind = 'note';
-            return new this.constructor(this._calls.concat(getSubfacts),
-                                        this._max,
-                                        this._types);
+            return new this.constructor(this._calls.concat(getSubfacts), this._max, this._types);
         }
 
         /**
@@ -1693,7 +1695,7 @@
             let getSubfacts;
 
             function getSubfactsFromNumber(fnode) {
-                return {score: scoreOrCallback};
+                return { score: scoreOrCallback };
             }
 
             function getSubfactsFromFunction(fnode) {
@@ -1704,7 +1706,7 @@
                     // debugging.
                     result = Number(result);
                 }
-                return {score: result};
+                return { score: result };
             }
 
             if (typeof scoreOrCallback === 'number') {
@@ -1715,9 +1717,7 @@
             getSubfacts.possibleSubfacts = SCORE;
             getSubfacts.kind = 'score';
 
-            return new this.constructor(this._calls.concat(getSubfacts),
-                                        this._max,
-                                        this._types);
+            return new this.constructor(this._calls.concat(getSubfacts), this._max, this._types);
         }
 
         // Future: why not have an .element() method for completeness?
@@ -1783,17 +1783,15 @@
                     couldChangeType = true;
                     break;
                 } else if (call.kind === 'type') {
-                    return {couldChangeType: true,
-                            possibleTypes: new Set([call.type])};
+                    return { couldChangeType: true, possibleTypes: new Set([call.type]) };
                 }
             }
-            return {couldChangeType,
-                    possibleTypes: this._types};
+            return { couldChangeType, possibleTypes: this._types };
         }
     }
 
     class OutwardRhs {
-        constructor(key, through = x => x, allThrough = x => x) {
+        constructor(key, through = (x) => x, allThrough = (x) => x) {
             this.key = key;
             this.callback = through;
             this.allCallback = allThrough;
@@ -1827,28 +1825,28 @@
     }
 
     function props(callback) {
-        return new Side({method: 'props', args: [callback]});
+        return new Side({ method: 'props', args: [callback] });
     }
 
     /** Constrain to an input type on the LHS, or apply a type on the RHS. */
     function type(theType) {
-        return new Side({method: 'type', args: [theType]});
+        return new Side({ method: 'type', args: [theType] });
     }
 
     function note(callback) {
-        return new Side({method: 'note', args: [callback]});
+        return new Side({ method: 'note', args: [callback] });
     }
 
     function score(scoreOrCallback) {
-        return new Side({method: 'score', args: [scoreOrCallback]});
+        return new Side({ method: 'score', args: [scoreOrCallback] });
     }
 
     function atMost(score) {
-        return new Side({method: 'atMost', args: [score]});
+        return new Side({ method: 'atMost', args: [score] });
     }
 
     function typeIn(...types) {
-        return new Side({method: 'typeIn', args: types});
+        return new Side({ method: 'typeIn', args: types });
     }
 
     /**
@@ -1862,7 +1860,7 @@
      * around by having 2 rules with identical RHSs.
      */
     function and(...lhss) {
-        return new Side({method: 'and', args: lhss});
+        return new Side({ method: 'and', args: lhss });
     }
 
     /**
@@ -1890,7 +1888,7 @@
      *     is a spatial distance.
      */
     function nearest(typeCallA, typeCallB, distance = euclidean) {
-        return new Side({method: 'nearest', args: [typeCallA, typeCallB, distance]});
+        return new Side({ method: 'nearest', args: [typeCallA, typeCallB, distance] });
     }
 
     /**
@@ -1942,7 +1940,7 @@
         }
 
         _and(method, ...args) {
-            return new this.constructor(...this._calls.concat({method, args}));
+            return new this.constructor(...this._calls.concat({ method, args }));
         }
 
         asLhs() {
@@ -2020,8 +2018,7 @@
          */
         scoreFor(type) {
             this._computeType(type);
-            return sigmoid(this._ruleset.weightedScore(this.scoresSoFarFor(type)) +
-                           getDefault(this._ruleset.biases, type, () => 0));
+            return sigmoid(this._ruleset.weightedScore(this.scoresSoFarFor(type)) + getDefault(this._ruleset.biases, type, () => 0));
         }
 
         /**
@@ -2086,7 +2083,9 @@
         setNoteFor(type, note) {
             if (this._hasNoteSoFarFor(type)) {
                 if (note !== undefined) {
-                    throw new Error(`Someone (likely the right-hand side of a rule) tried to add a note of type ${type} to an element, but one of that type already exists. Overwriting notes is not allowed, since it would make the order of rules matter.`);
+                    throw new Error(
+                        `Someone (likely the right-hand side of a rule) tried to add a note of type ${type} to an element, but one of that type already exists. Overwriting notes is not allowed, since it would make the order of rules matter.`,
+                    );
                 }
                 // else the incoming note is undefined and we already have the
                 // type, so it's a no-op
@@ -2101,7 +2100,7 @@
          * Return a score/note record for a type, creating it if it doesn't exist.
          */
         _typeRecordForSetting(type) {
-            return setDefault(this._types, type, () => ({score: new Map()}));
+            return setDefault(this._types, type, () => ({ score: new Map() }));
         }
 
         /**
@@ -2109,7 +2108,7 @@
          * a .? operator in JS.
          */
         _typeRecordForGetting(type) {
-            return getDefault(this._types, type, () => ({score: new Map()}));
+            return getDefault(this._types, type, () => ({ score: new Map() }));
         }
 
         /**
@@ -2117,7 +2116,8 @@
          * computed for my element.
          */
         _computeType(theType) {
-            if (!this._types.has(theType)) {  // Prevent infinite recursion when an A->A rule looks at A's note in a callback.
+            if (!this._types.has(theType)) {
+                // Prevent infinite recursion when an A->A rule looks at A's note in a callback.
                 this._ruleset.get(type(theType));
             }
         }
@@ -2144,7 +2144,7 @@
         if (typeof rhs === 'string') {
             rhs = out(rhs);
         }
-        return new ((rhs instanceof OutwardRhs) ? OutwardRule : InwardRule)(lhs, rhs, options);
+        return new (rhs instanceof OutwardRhs ? OutwardRule : InwardRule)(lhs, rhs, options);
     }
 
     let nextRuleNumber = 0;
@@ -2157,7 +2157,8 @@
      * RHS result is cached, and Rules are responsible for maintaining the rulewise
      * cache ruleset.ruleCache.
      */
-    class Rule {  // abstract
+    class Rule {
+        // abstract
         constructor(lhs, rhs, options) {
             this.lhs = lhs.asLhs();
             this.rhs = rhs.asRhs();
@@ -2211,14 +2212,14 @@
             const prereqs = new NiceSet();
 
             // Add finalized types:
-            extendOrThrow(prereqs, this._typesFinalized(), type => ruleset.inwardRulesThatCouldEmit(type), 'emits');
+            extendOrThrow(prereqs, this._typesFinalized(), (type) => ruleset.inwardRulesThatCouldEmit(type), 'emits');
 
             // Add mentioned types:
             // We could say this.lhs.typesMentioned().minus(typesFinalized) as an
             // optimization. But since types mentioned are a superset of types
             // finalized and rules adding are a subset of rules emitting, we get
             // the same result without.
-            extendOrThrow(prereqs, this.lhs.typesMentioned(), type => ruleset.inwardRulesThatCouldAdd(type), 'adds');
+            extendOrThrow(prereqs, this.lhs.typesMentioned(), (type) => ruleset.inwardRulesThatCouldAdd(type), 'adds');
 
             return prereqs;
         }
@@ -2257,7 +2258,7 @@
             // TODO: Could arbitrary predicates (once we implement those) matter
             // too? Maybe it's not just aggregations.
             const type = this.lhs.aggregatedType();
-            return (type === undefined) ? new NiceSet() : new NiceSet([type]);
+            return type === undefined ? new NiceSet() : new NiceSet([type]);
         }
     }
 
@@ -2275,8 +2276,11 @@
          * rules are done executing, and its cache of results per type.
          */
         results(ruleset) {
-            if (ruleset.doneRules.has(this)) {  // shouldn't happen
-                throw new Error('A bug in Fathom caused results() to be called on an inward rule twice. That could cause redundant score contributions, etc.');
+            if (ruleset.doneRules.has(this)) {
+                // shouldn't happen
+                throw new Error(
+                    'A bug in Fathom caused results() to be called on an inward rule twice. That could cause redundant score contributions, etc.',
+                );
             }
             const self = this;
             // For now, we consider most of what a LHS computes to be cheap, aside
@@ -2295,7 +2299,7 @@
                     const leftType = self.lhs.guaranteedType();
                     // Get a fnode and a RHS transformer, whether a plain fnode is
                     // returned or a {fnode, rhsTransformer} pair:
-                    const {fnode: leftFnode = leftResult, rhsTransformer = identity} = leftResult;
+                    const { fnode: leftFnode = leftResult, rhsTransformer = identity } = leftResult;
                     // Grab the fact from the RHS, and run the LHS's optional
                     // transformer over it to pick up anything special it wants to
                     // do:
@@ -2309,20 +2313,25 @@
                         if (rightType !== undefined) {
                             rightFnode.addScoreFor(rightType, fact.score, self.name);
                         } else {
-                            throw new Error(`The right-hand side of a rule specified a score (${fact.score}) with neither an explicit type nor one we could infer from the left-hand side.`);
+                            throw new Error(
+                                `The right-hand side of a rule specified a score (${fact.score}) with neither an explicit type nor one we could infer from the left-hand side.`,
+                            );
                         }
                     }
                     if (fact.type !== undefined || fact.note !== undefined) {
                         // There's a reason to call setNoteFor.
                         if (rightType === undefined) {
-                            throw new Error(`The right-hand side of a rule specified a note (${fact.note}) with neither an explicit type nor one we could infer from the left-hand side. Notes are per-type, per-node, so that's a problem.`);
+                            throw new Error(
+                                `The right-hand side of a rule specified a note (${fact.note}) with neither an explicit type nor one we could infer from the left-hand side. Notes are per-type, per-node, so that's a problem.`,
+                            );
                         } else {
                             rightFnode.setNoteFor(rightType, fact.note);
                         }
                     }
                     returnedFnodes.add(rightFnode);
                 },
-                leftResults);
+                leftResults,
+            );
 
             // Update ruleset lookup tables.
             // First, mark this rule as done:
@@ -2352,7 +2361,9 @@
                 // We can prove the type emission from the RHS alone.
                 return rhs.possibleTypes;
             } else {
-                throw new Error('Could not determine the emitted type of a rule because its right-hand side calls props() without calling typeIn().');
+                throw new Error(
+                    'Could not determine the emitted type of a rule because its right-hand side calls props() without calling typeIn().',
+                );
             }
         }
 
@@ -2423,7 +2434,7 @@
              * the fnode and return it.
              */
             function justFnode(fnodeOrStruct) {
-                return (fnodeOrStruct instanceof Fnode) ? fnodeOrStruct : fnodeOrStruct.fnode;
+                return fnodeOrStruct instanceof Fnode ? fnodeOrStruct : fnodeOrStruct.fnode;
             }
 
             return this.rhs.allCallback(map(this.rhs.callback, map(justFnode, this.lhs.fnodes(ruleset))));
@@ -2469,12 +2480,12 @@
          */
         constructor(rules, coeffs = [], biases = []) {
             this._inRules = [];
-            this._outRules = new Map();  // key -> rule
-            this._rulesThatCouldEmit = new Map();  // type -> [rules]
-            this._rulesThatCouldAdd = new Map();  // type -> [rules]
+            this._outRules = new Map(); // key -> rule
+            this._rulesThatCouldEmit = new Map(); // type -> [rules]
+            this._rulesThatCouldAdd = new Map(); // type -> [rules]
             // Private to the framework:
-            this._coeffs = new Map(coeffs);  // rule name => coefficient
-            this.biases = new Map(biases);  // type name => bias
+            this._coeffs = new Map(coeffs); // rule name => coefficient
+            this.biases = new Map(biases); // type name => bias
 
             // Separate rules into out ones and in ones, and sock them away. We do
             // this here so mistakes raise errors early.
@@ -2510,13 +2521,15 @@
          * bric-a-brac.
          */
         against(doc) {
-            return new BoundRuleset(doc,
-                                    this._inRules,
-                                    this._outRules,
-                                    this._rulesThatCouldEmit,
-                                    this._rulesThatCouldAdd,
-                                    this._coeffs,
-                                    this.biases);
+            return new BoundRuleset(
+                doc,
+                this._inRules,
+                this._outRules,
+                this._rulesThatCouldEmit,
+                this._rulesThatCouldAdd,
+                this._coeffs,
+                this.biases,
+            );
         }
 
         /**
@@ -2552,8 +2565,8 @@
             // Private, for the use of only helper classes:
             this.biases = biases;
             this._clearCaches();
-            this.elementCache = new WeakMap();  // DOM element => fnode about it
-            this.doneRules = new Set();  // InwardRules that have been executed. OutwardRules can be executed more than once because they don't change any fnodes and are thus idempotent.
+            this.elementCache = new WeakMap(); // DOM element => fnode about it
+            this.doneRules = new Set(); // InwardRules that have been executed. OutwardRules can be executed more than once because they don't change any fnodes and are thus idempotent.
         }
 
         /**
@@ -2575,8 +2588,8 @@
          * ``this._coeffs``, because both of thise depend on weighted scores.
          */
         _clearCaches() {
-            this.maxCache = new Map();  // type => Array of max fnode (or fnodes, if tied) of this type
-            this.typeCache = new Map();  // type => Set of all fnodes of this type found so far. (The dependency resolution during execution ensures that individual types will be comprehensive just in time.)
+            this.maxCache = new Map(); // type => Array of max fnode (or fnodes, if tied) of this type
+            this.typeCache = new Map(); // type => Set of all fnodes of this type found so far. (The dependency resolution during execution ensures that individual types will be comprehensive just in time.)
         }
 
         /**
@@ -2682,8 +2695,7 @@
             const prereqs = this._prerequisitesTo(rule);
             let sorted;
             try {
-                sorted = [rule].concat(toposort(prereqs.keys(),
-                                                prereq => prereqs.get(prereq)));
+                sorted = [rule].concat(toposort(prereqs.keys(), (prereq) => prereqs.get(prereq)));
             } catch (exc) {
                 if (exc instanceof CycleError) {
                     throw new CycleError('There is a cyclic dependency in the ruleset.');
@@ -2714,9 +2726,7 @@
          *     not trigger any execution, so the result may be incomplete.
          */
         fnodeForElement(element) {
-            return setDefault(this.elementCache,
-                              element,
-                              () => new Fnode(element, this));
+            return setDefault(this.elementCache, element, () => new Fnode(element, this));
         }
     }
 
@@ -2730,7 +2740,7 @@
         if (string === null) {
             return 0;
         }
-        return (string.match(regex) || []).length;  // Optimization: split() benchmarks faster.
+        return (string.match(regex) || []).length; // Optimization: split() benchmarks faster.
     }
 
     /**
@@ -2760,9 +2770,10 @@
         // Then check for a common mistake found in the training set: using the
         // <input>'s `name` attribute instead of its `id` to associate with a label
         const form = element.form;
-        if (element.name.length > 0 && form !== null) { // look at nearby elements in general, not just in parent form?
-            for (const label of Array.from(form.getElementsByTagName("label"))) {
-                if (label.htmlFor.length > 0 && (label.htmlFor === element.name)) {
+        if (element.name.length > 0 && form !== null) {
+            // look at nearby elements in general, not just in parent form?
+            for (const label of Array.from(form.getElementsByTagName('label'))) {
+                if (label.htmlFor.length > 0 && label.htmlFor === element.name) {
                     const numFound = numRegexMatches(regex, label.innerText);
                     if (numFound > 0) return true;
                 }
@@ -2778,37 +2789,37 @@
     const email_detector_ruleset = ruleset(
         [
             // Inputs that could be email fields:
-            rule(dom("input[type=text],input[type=\"\"],input:not([type])").when(isVisible), type("email")),
+            rule(dom('input[type=text],input[type=""],input:not([type])').when(isVisible), type('email')),
 
             // Look for exact matches of "email"-like keywords in some attributes of the <input>
             rule(
-                type("email"),
-                score(fnode => attrsMatch(fnode.element, ["id", "name", "autocomplete"], emailRegexMatchLine)),
-                {name: "inputAttrsMatchEmailExactly"}
+                type('email'),
+                score((fnode) => attrsMatch(fnode.element, ['id', 'name', 'autocomplete'], emailRegexMatchLine)),
+                { name: 'inputAttrsMatchEmailExactly' },
             ),
 
             // Count matches of "email"-like keywords in some attributes of the <input>
             rule(
-                type("email"),
-                score(fnode => attrsMatch(fnode.element, ["placeholder", "aria-label"], emailRegex)),
-                {name: "inputPlaceholderMatchesEmail"}
+                type('email'),
+                score((fnode) => attrsMatch(fnode.element, ['placeholder', 'aria-label'], emailRegex)),
+                { name: 'inputPlaceholderMatchesEmail' },
             ),
 
             // If there's a corresponding <label> for this input, count its inner text matches for "email"-like keywords
             rule(
-                type("email"),
-                score(fnode => labelForInputMatches(fnode.element, emailRegex)),
-                {name: "labelForInputMatchesEmail"}
+                type('email'),
+                score((fnode) => labelForInputMatches(fnode.element, emailRegex)),
+                { name: 'labelForInputMatchesEmail' },
             ),
 
-            rule(type("email"), out("email")),
+            rule(type('email'), out('email')),
         ],
         new Map([
-            ["inputAttrsMatchEmailExactly", 9.416913986206055],
-            ["inputPlaceholderMatchesEmail", 6.740292072296143],
-            ["labelForInputMatchesEmail", 10.197700500488281],
+            ['inputAttrsMatchEmailExactly', 9.416913986206055],
+            ['inputPlaceholderMatchesEmail', 6.740292072296143],
+            ['labelForInputMatchesEmail', 10.197700500488281],
         ]),
-        [["email", -3.907843589782715]]
+        [['email', -3.907843589782715]],
     );
 
     /**
@@ -2816,26 +2827,28 @@
      * @param {Element} el
      */
     function getXPath(el) {
-        if (typeof el === "string") {
+        if (typeof el === 'string') {
             return document.evaluate(el, document, null, 0, null);
         }
-        if (!el || el.nodeType != 1) {return '';}
-        if (el.id) {return `//*[@id='${el.id}']`;}
+        if (!el || el.nodeType != 1) {
+            return '';
+        }
+        if (el.id) {
+            return `//*[@id='${el.id}']`;
+        }
         const elTagName = el.tagName;
-        const sames = Array.from(el.parentNode.children).filter(x => x.tagName == elTagName);
-        return getXPath(el.parentElement) + '/' + elTagName.toLowerCase() + (
-            sames.length > 1 ? `[${sames.indexOf(el) + 1}]` : ''
-            );
+        const sames = Array.from(el.parentNode.children).filter((x) => x.tagName == elTagName);
+        return getXPath(el.parentElement) + '/' + elTagName.toLowerCase() + (sames.length > 1 ? `[${sames.indexOf(el) + 1}]` : '');
     }
 
     /**
      * @returns boolean
      * @param {Element} el
      */
-     function isOnTop(el) {
+    function isOnTop(el) {
         const rect = el.getBoundingClientRect();
-        const centerX = (rect.left + rect.right)/2;
-        const centerY = (rect.top + rect.bottom)/2;
+        const centerX = (rect.left + rect.right) / 2;
+        const centerY = (rect.top + rect.bottom) / 2;
         const topEl = document.elementFromPoint(centerX, centerY);
         return el.isSameNode(topEl);
     }
@@ -2844,21 +2857,21 @@
      * @param {Element} domRoot
      */
 
-    function *detectEmailInputs(domRoot) {
+    function* detectEmailInputs(domRoot) {
         // First return <input type='email'>
         const typeEmailInputs = Array.from(domRoot.querySelectorAll("input[type='email']"));
         for (const input of typeEmailInputs) {
             // yield input;
             // send -1 as the score for fields detected based on type
-            yield {xpath: getXPath(input), score: -1};
+            yield { xpath: getXPath(input), score: -1 };
         }
 
         // Then run ruleset and return detected fields
-        const detectedInputs = email_detector_ruleset.against(domRoot).get("email");
+        const detectedInputs = email_detector_ruleset.against(domRoot).get('email');
         for (const input of detectedInputs) {
-            if (input.scoreFor("email") > 0.5) {
+            if (input.scoreFor('email') > 0.5) {
                 // yield input.element;
-                yield {xpath: getXPath(input.element), score: input.scoreFor("email")};
+                yield { xpath: getXPath(input.element), score: input.scoreFor('email') };
             }
         }
     }
@@ -2890,5 +2903,4 @@
     exports.isOnTop = isOnTop;
 
     // Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
+});

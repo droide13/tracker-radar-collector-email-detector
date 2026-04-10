@@ -78,10 +78,10 @@ const {
     SCORE,
     HIGH_CONFIDENCE_GAP,
     MED_CONFIDENCE_GAP,
-} = require('./emailHeuristic/emailFieldConstants');
+} = require('./EmailHeuristic/emailFieldConstants');
 
 // ── Browser-side scripts loaded from disk ────────────────────────────────────
-const HELPERS_DIR = path.join(__dirname, '.emailHeuristic');
+const HELPERS_DIR = path.join(__dirname, 'EmailHeuristic');
 const EMAIL_FIELD_SCANNER = fs.readFileSync(path.join(HELPERS_DIR, 'browserJS/emailFieldScanner.js'), 'utf8');
 const LINK_DISCOVERY_SRC = fs.readFileSync(path.join(HELPERS_DIR, 'browserJS/emailLinkDiscovery.js'), 'utf8');
 

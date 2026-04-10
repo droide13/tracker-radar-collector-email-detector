@@ -1,4 +1,4 @@
-(el => ({
+(el) => ({
     id: el.id || '',
     type: el.getAttribute('type') || '',
     nodeType: el.nodeName || '',
@@ -8,6 +8,6 @@
     innerText: (el.innerText || '').trim(),
     ariaLabel: el.ariaLabel || '',
     placeholder: el.getAttribute('placeholder') || '',
-    xpath: (typeof fathom !== 'undefined') ? fathom.getXPath(el) : '',
-    onTop: (typeof fathom !== 'undefined') ? fathom.isOnTop(el) : false,
-}))
+    xpath: typeof fathom !== 'undefined' ? fathom.getXPath(el) : '',
+    onTop: typeof fathom !== 'undefined' ? fathom.isOnTop(el) : false,
+});

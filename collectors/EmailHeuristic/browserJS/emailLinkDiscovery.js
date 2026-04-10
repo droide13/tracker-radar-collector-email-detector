@@ -1,5 +1,4 @@
 (() => {
-
     // ── Config ────────────────────────────────────────────────────────────
 
     /**
@@ -7,167 +6,298 @@
      * Grouped by intent so you can maintain them independently.
      */
     const TEXT_KEYWORDS = {
-
         // ── Auth / account ────────────────────────────────────────────────
         login: [
             // English
-            'log in', 'login', 'log-in', 'sign in', 'signin', 'sign-in',
+            'log in',
+            'login',
+            'log-in',
+            'sign in',
+            'signin',
+            'sign-in',
             // Spanish
-            'iniciar sesión', 'entrar', 'acceder', 'ingresar',
+            'iniciar sesión',
+            'entrar',
+            'acceder',
+            'ingresar',
             // French
-            "se connecter", "connexion", "s'identifier",
+            'se connecter',
+            'connexion',
+            "s'identifier",
             // German
-            'anmelden', 'einloggen', 'einloggen',
+            'anmelden',
+            'einloggen',
+            'einloggen',
             // Portuguese
-            'entrar', 'iniciar sessão',
+            'entrar',
+            'iniciar sessão',
             // Italian
-            'accedi', 'accesso',
+            'accedi',
+            'accesso',
             // Japanese
-            'ログイン', 'サインイン', 'ログイン',
+            'ログイン',
+            'サインイン',
+            'ログイン',
             // Chinese (simplified + traditional)
-            '登录', '登入', '登陆',
+            '登录',
+            '登入',
+            '登陆',
             // Korean
             '로그인',
             // Arabic
-            'تسجيل الدخول', 'دخول',
+            'تسجيل الدخول',
+            'دخول',
             // Russian
-            'войти', 'вход',
+            'войти',
+            'вход',
             // Uzbek
             'kirish',
             // Turkish
-            'giriş', 'oturum aç',
+            'giriş',
+            'oturum aç',
             // Dutch
-            'inloggen', 'aanmelden',
+            'inloggen',
+            'aanmelden',
             // Polish
-            'zaloguj', 'logowanie',
+            'zaloguj',
+            'logowanie',
             // Swedish / Norwegian / Danish
-            'logga in', 'logg inn', 'log ind',
+            'logga in',
+            'logg inn',
+            'log ind',
         ],
 
         register: [
             // English
-            'register', 'registration', 'sign up', 'signup', 'sign-up',
-            'create account', 'create an account', 'get started', 'join',
+            'register',
+            'registration',
+            'sign up',
+            'signup',
+            'sign-up',
+            'create account',
+            'create an account',
+            'get started',
+            'join',
             // Spanish
-            'registrarse', 'registrar', 'crear cuenta', 'únete',
+            'registrarse',
+            'registrar',
+            'crear cuenta',
+            'únete',
             // French
-            "s'inscrire", 'inscription', 'créer un compte',
+            "s'inscrire",
+            'inscription',
+            'créer un compte',
             // German
-            'registrieren', 'konto erstellen', 'anmeldung', 'mitmachen',
+            'registrieren',
+            'konto erstellen',
+            'anmeldung',
+            'mitmachen',
             // Portuguese
-            'cadastrar', 'cadastro', 'criar conta', 'inscrever',
+            'cadastrar',
+            'cadastro',
+            'criar conta',
+            'inscrever',
             // Italian
-            'registrati', 'iscrizione', 'crea account',
+            'registrati',
+            'iscrizione',
+            'crea account',
             // Japanese
-            '登録', '会員登録', 'サインアップ', 'アカウント作成',
+            '登録',
+            '会員登録',
+            'サインアップ',
+            'アカウント作成',
             // Chinese
-            '注册', '注冊', '立即注册',
+            '注册',
+            '注冊',
+            '立即注册',
             // Korean
-            '회원가입', '가입하기', '가입',
+            '회원가입',
+            '가입하기',
+            '가입',
             // Arabic
-            'تسجيل', 'إنشاء حساب', 'انضم',
+            'تسجيل',
+            'إنشاء حساب',
+            'انضم',
             // Russian
-            'зарегистрироваться', 'регистрация', 'создать аккаунт',
+            'зарегистрироваться',
+            'регистрация',
+            'создать аккаунт',
             // Uzbek
             "ro'yxatdan o'tish",
             // Turkish
-            'kayıt ol', 'üye ol', 'hesap oluştur',
+            'kayıt ol',
+            'üye ol',
+            'hesap oluştur',
             // Dutch
-            'registreren', 'aanmaken', 'inschrijven',
+            'registreren',
+            'aanmaken',
+            'inschrijven',
             // Polish
-            'rejestracja', 'zarejestruj',
+            'rejestracja',
+            'zarejestruj',
             // Swedish / Norwegian / Danish
-            'registrera dig', 'registrer deg', 'tilmeld',
+            'registrera dig',
+            'registrer deg',
+            'tilmeld',
         ],
 
         subscribe: [
             // English
-            'subscribe', 'subscription', 'newsletter', 'mailing', 'mailing list',
-            'email updates', 'alerts', 'updates', 'notify me', 'waitlist',
+            'subscribe',
+            'subscription',
+            'newsletter',
+            'mailing',
+            'mailing list',
+            'email updates',
+            'alerts',
+            'updates',
+            'notify me',
+            'waitlist',
             // Spanish
-            'suscribirse', 'suscripción', 'boletín', 'novedades',
+            'suscribirse',
+            'suscripción',
+            'boletín',
+            'novedades',
             // French
-            "s'abonner", 'abonnement', 'lettre d\'information', 'newsletter',
+            "s'abonner",
+            'abonnement',
+            "lettre d'information",
+            'newsletter',
             // German
-            'abonnieren', 'newsletter', 'benachrichtigungen',
+            'abonnieren',
+            'newsletter',
+            'benachrichtigungen',
             // Portuguese
-            'assinar', 'assine', 'boletim', 'newsletter',
+            'assinar',
+            'assine',
+            'boletim',
+            'newsletter',
             // Italian
-            'iscriviti', 'abbonati', 'newsletter',
+            'iscriviti',
+            'abbonati',
+            'newsletter',
             // Japanese
-            'メルマガ', 'ニュースレター', '登録する', '購読',
+            'メルマガ',
+            'ニュースレター',
+            '登録する',
+            '購読',
             // Chinese
-            '订阅', '訂閱',
+            '订阅',
+            '訂閱',
             // Korean
-            '구독', '뉴스레터',
+            '구독',
+            '뉴스레터',
             // Arabic
-            'اشتراك', 'النشرة البريدية',
+            'اشتراك',
+            'النشرة البريدية',
             // Russian
-            'подписаться', 'рассылка', 'новости',
+            'подписаться',
+            'рассылка',
+            'новости',
             // Turkish
-            'abone ol', 'bülten',
+            'abone ol',
+            'bülten',
             // Dutch
-            'abonneren', 'nieuwsbrief',
+            'abonneren',
+            'nieuwsbrief',
             // Polish
-            'subskrybuj', 'newsletter',
+            'subskrybuj',
+            'newsletter',
         ],
 
         contact: [
             // English
-            'contact', 'contact us', 'get in touch',
+            'contact',
+            'contact us',
+            'get in touch',
             // Spanish
-            'contacto', 'contáctanos',
+            'contacto',
+            'contáctanos',
             // French
-            'contact', 'nous contacter',
+            'contact',
+            'nous contacter',
             // German
-            'kontakt', 'kontaktieren',
+            'kontakt',
+            'kontaktieren',
             // Portuguese
-            'contato', 'fale conosco',
+            'contato',
+            'fale conosco',
             // Italian
-            'contattaci', 'contatto',
+            'contattaci',
+            'contatto',
             // Japanese
-            'お問い合わせ', 'お問合せ', 'コンタクト',
+            'お問い合わせ',
+            'お問合せ',
+            'コンタクト',
             // Chinese
-            '联系我们', '聯絡我們',
+            '联系我们',
+            '聯絡我們',
             // Korean
-            '문의', '연락하기',
+            '문의',
+            '연락하기',
             // Arabic
-            'اتصل بنا', 'تواصل معنا',
+            'اتصل بنا',
+            'تواصل معنا',
             // Russian
-            'контакты', 'связаться',
+            'контакты',
+            'связаться',
             // Turkish
             'iletişim',
             // Dutch
-            'contact', 'neem contact op',
+            'contact',
+            'neem contact op',
             // Polish
-            'kontakt', 'skontaktuj się',
+            'kontakt',
+            'skontaktuj się',
         ],
 
         member: [
             // English
-            'member', 'membership', 'account',
+            'member',
+            'membership',
+            'account',
             // Spanish
-            'miembro', 'membresía', 'cuenta',
+            'miembro',
+            'membresía',
+            'cuenta',
             // French
-            'membre', 'adhésion', 'compte',
+            'membre',
+            'adhésion',
+            'compte',
             // German
-            'mitglied', 'mitgliedschaft', 'konto',
+            'mitglied',
+            'mitgliedschaft',
+            'konto',
             // Portuguese
-            'membro', 'associação', 'conta',
+            'membro',
+            'associação',
+            'conta',
             // Italian
-            'membro', 'iscritto', 'account',
+            'membro',
+            'iscritto',
+            'account',
             // Japanese
-            '会員', 'メンバー', 'アカウント',
+            '会員',
+            'メンバー',
+            'アカウント',
             // Chinese
-            '会员', '會員',
+            '会员',
+            '會員',
             // Korean
-            '회원', '멤버',
+            '회원',
+            '멤버',
             // Arabic
-            'عضو', 'عضوية', 'حساب',
+            'عضو',
+            'عضوية',
+            'حساب',
             // Russian
-            'участник', 'членство', 'аккаунт',
+            'участник',
+            'членство',
+            'аккаунт',
             // Turkish
-            'üye', 'üyelik', 'hesap',
+            'üye',
+            'üyelik',
+            'hesap',
         ],
     };
 
@@ -181,41 +311,59 @@
      */
     const PATH_KEYWORDS = [
         // Auth
-        'login', 'log-in', 'signin', 'sign-in', 'sign_in',
-        'auth', 'oauth', 'sso',
+        'login',
+        'log-in',
+        'signin',
+        'sign-in',
+        'sign_in',
+        'auth',
+        'oauth',
+        'sso',
         // Registration
-        'register', 'registration', 'signup', 'sign-up', 'sign_up',
-        'enroll', 'enroll',
+        'register',
+        'registration',
+        'signup',
+        'sign-up',
+        'sign_up',
+        'enroll',
+        'enroll',
         // Subscribe / newsletter
-        'subscribe', 'subscription', 'newsletter', 'mailing',
-        'waitlist', 'wait-list',
+        'subscribe',
+        'subscription',
+        'newsletter',
+        'mailing',
+        'waitlist',
+        'wait-list',
         // Account
-        'account', 'accounts', 'profile', 'join',
+        'account',
+        'accounts',
+        'profile',
+        'join',
         // Contact
         'contact',
         // Localized URL slugs (common ones)
-        'anmelden',          // German login
-        'registrieren',      // German register
-        'inscription',       // French register
-        'connexion',         // French login
-        'registro',          // Spanish register
-        'acceso',            // Spanish login
-        'cadastro',          // Portuguese register
-        'entrar',            // Portuguese/Spanish login
-        'giris',             // Turkish login (ASCII of giriş)
-        'uye-ol',            // Turkish register
-        'kayit',             // Turkish register (ASCII of kayıt)
-        'kirish',            // Uzbek login
-        'войти',             // Russian (Cyrillic in URLs, rare but valid)
-        'registraciya',      // Russian transliterated
-        'abonner',           // French subscribe
-        'abonnieren',        // German subscribe
-        'inloggen',          // Dutch login
-        'registreren',       // Dutch register
-        'zaloguj',           // Polish login
-        'rejestracja',       // Polish register
-        'logga-in',          // Swedish login
-        'registrera',        // Swedish register
+        'anmelden', // German login
+        'registrieren', // German register
+        'inscription', // French register
+        'connexion', // French login
+        'registro', // Spanish register
+        'acceso', // Spanish login
+        'cadastro', // Portuguese register
+        'entrar', // Portuguese/Spanish login
+        'giris', // Turkish login (ASCII of giriş)
+        'uye-ol', // Turkish register
+        'kayit', // Turkish register (ASCII of kayıt)
+        'kirish', // Uzbek login
+        'войти', // Russian (Cyrillic in URLs, rare but valid)
+        'registraciya', // Russian transliterated
+        'abonner', // French subscribe
+        'abonnieren', // German subscribe
+        'inloggen', // Dutch login
+        'registreren', // Dutch register
+        'zaloguj', // Polish login
+        'rejestracja', // Polish register
+        'logga-in', // Swedish login
+        'registrera', // Swedish register
     ];
 
     // Flat set of all text keywords for fast lookup
@@ -231,7 +379,7 @@
     function containsAnyKeyword(str, keywords) {
         if (!str) return false;
         const lower = str.toLowerCase();
-        return keywords.some(k => lower.includes(k.toLowerCase()));
+        return keywords.some((k) => lower.includes(k.toLowerCase()));
     }
 
     /**
@@ -250,15 +398,17 @@
         if (a.getAttribute('aria-label')) parts.push(a.getAttribute('aria-label'));
         const lbId = a.getAttribute('aria-labelledby');
         if (lbId) {
-            lbId.trim().split(/\s+/).forEach(id => {
-                const el = document.getElementById(id);
-                if (el) parts.push((el.textContent || '').trim());
-            });
+            lbId.trim()
+                .split(/\s+/)
+                .forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) parts.push((el.textContent || '').trim());
+                });
         }
         // Title
         if (a.getAttribute('title')) parts.push(a.getAttribute('title'));
         // Child img alt
-        a.querySelectorAll('img[alt]').forEach(img => {
+        a.querySelectorAll('img[alt]').forEach((img) => {
             if (img.alt) parts.push(img.alt);
         });
         return parts.join(' ');
@@ -293,9 +443,21 @@
     function registeredDomain(hostname) {
         const parts = hostname.split('.');
         // Handle common two-part TLDs: co.uk, com.br, com.au, co.jp etc.
-        const twoPartTLDs = ['co.uk','co.jp','co.nz','co.za','co.kr',
-                             'com.br','com.au','com.ar','com.mx',
-                             'org.uk','net.uk','ac.uk','gov.uk'];
+        const twoPartTLDs = [
+            'co.uk',
+            'co.jp',
+            'co.nz',
+            'co.za',
+            'co.kr',
+            'com.br',
+            'com.au',
+            'com.ar',
+            'com.mx',
+            'org.uk',
+            'net.uk',
+            'ac.uk',
+            'gov.uk',
+        ];
         const last2 = parts.slice(-2).join('.');
         const last3 = parts.slice(-3).join('.');
         if (twoPartTLDs.includes(last2)) return parts.slice(-3).join('.');
@@ -348,5 +510,5 @@
 
     // Return just hrefs to match original API, or return full objects for debugging:
     // return links;
-    return links.map(l => l.href);
+    return links.map((l) => l.href);
 })();
