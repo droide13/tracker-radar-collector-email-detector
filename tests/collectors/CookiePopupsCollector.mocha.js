@@ -1,7 +1,6 @@
 const CookiePopupsCollector = require('../../collectors/CookiePopupsCollector');
 const { filterCompactRules } = require('@duckduckgo/autoconsent');
 const compactRules = require('@duckduckgo/autoconsent/rules/compact-rules.json');
-const { consentomatic } = require('@duckduckgo/autoconsent/rules/consentomatic.json');
 const assert = require('assert');
 const sinon = require('sinon');
 
@@ -96,15 +95,14 @@ describe('CookiePopupsCollector', () => {
                     disabledCmps: [],
                     enablePrehide: false,
                     enableCosmeticRules: true,
-                    enableFilterList: false,
                     enableHeuristicDetection: true,
-                    enableHeuristicAction: true,
+                    heuristicMode: 'tier2',
                     detectRetries: 20,
                     isMainWorld: false,
+                    performanceLoggingEnabled: true,
                 };
                 const expectedRules = {
                     autoconsent: [],
-                    consentomatic,
                     compact: filterCompactRules(compactRules, { url: 'https://example.com/', mainFrame: true }),
                 };
                 assert.deepStrictEqual(commands[0], [
@@ -134,15 +132,14 @@ describe('CookiePopupsCollector', () => {
                     disabledCmps: [],
                     enablePrehide: false,
                     enableCosmeticRules: true,
-                    enableFilterList: false,
                     enableHeuristicDetection: true,
-                    enableHeuristicAction: true,
+                    heuristicMode: 'tier2',
                     detectRetries: 20,
                     isMainWorld: false,
+                    performanceLoggingEnabled: true,
                 };
                 const expectedRules = {
                     autoconsent: [],
-                    consentomatic,
                     compact: filterCompactRules(compactRules, { url: 'https://consent.example.com/iframe', mainFrame: false }),
                 };
                 assert.deepStrictEqual(commands[0], [
@@ -228,6 +225,8 @@ describe('CookiePopupsCollector', () => {
                     cmp: 'some cmp',
                     url: 'some url',
                     isCosmetic: false,
+                    duration: 0,
+                    totalClicks: 0,
                 };
                 collector.selfTestFrame = null;
                 commands.splice(0, commands.length);
@@ -244,6 +243,8 @@ describe('CookiePopupsCollector', () => {
                     cmp: 'some cmp',
                     url: 'some url',
                     isCosmetic: false,
+                    duration: 0,
+                    totalClicks: 0,
                 };
                 collector.selfTestFrame = '1111';
                 commands.splice(0, commands.length);

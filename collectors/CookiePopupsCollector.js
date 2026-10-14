@@ -6,7 +6,6 @@ const { wait, TimeoutError } = require('../helpers/wait');
 const createDeferred = require('../helpers/deferred');
 const { filterCompactRules } = require('@duckduckgo/autoconsent');
 const compactRules = require('@duckduckgo/autoconsent/rules/compact-rules.json');
-const { consentomatic } = require('@duckduckgo/autoconsent/rules/consentomatic.json');
 
 // @ts-ignore
 const baseContentScript = fs.readFileSync(
@@ -35,6 +34,24 @@ window.autoconsentSendMessage = (msg) => {
 }
 
 const cookiePopupScrapeScript = fs.readFileSync(require.resolve('./CookiePopups/scrapeScript.js'), 'utf8');
+
+/**
+ * @param {string} url
+ * @returns {string}
+ */
+function normalizeFrameUrl(url) {
+    if (!url) {
+        return '';
+    }
+    try {
+        const parsed = new URL(url);
+        parsed.search = '';
+        parsed.hash = '';
+        return parsed.href;
+    } catch {
+        return url.split('?')[0].split('#')[0];
+    }
+}
 
 class CookiePopupsCollector extends ContentScriptCollector {
     collectorExtraTimeMs = SCRAPE_TIMEOUT + DETECT_TIMEOUT + FOUND_TIMEOUT + OPTOUT_TIMEOUT; // Autoconsent opt-out/opt-in and scraping can take a while
@@ -68,6 +85,8 @@ class CookiePopupsCollector extends ContentScriptCollector {
         this.mainFrameIds = new Set();
         /** @type {Map<string, { frameId: string, isMainFrame: boolean }>} */
         this.contextFrameInfo = new Map();
+        /** @type {Map<string, AutoconsentPerformanceResult>} */
+        this.performanceResults = new Map();
     }
 
     /**
@@ -179,11 +198,11 @@ class CookiePopupsCollector extends ContentScriptCollector {
                     disabledCmps: [],
                     enablePrehide: false,
                     enableCosmeticRules: true,
-                    enableFilterList: false,
                     enableHeuristicDetection: true,
-                    enableHeuristicAction: true,
+                    heuristicMode: 'tier2',
                     detectRetries: 20,
                     isMainWorld: false,
+                    performanceLoggingEnabled: true,
                 };
                 const frameInfo = this.contextFrameInfo.get(executionContextUniqueId);
                 const isMainFrame = frameInfo?.isMainFrame ?? true;
@@ -191,7 +210,6 @@ class CookiePopupsCollector extends ContentScriptCollector {
                 /** @type {import('../node_modules/@duckduckgo/autoconsent/lib/types').RuleBundle} */
                 const filteredRules = {
                     autoconsent: [],
-                    consentomatic,
                 };
                 if (compactRules.index) {
                     filteredRules.compact = filterCompactRules(
@@ -209,9 +227,6 @@ class CookiePopupsCollector extends ContentScriptCollector {
                 break;
             }
             case 'popupFound':
-                if (msg.cmp === 'filterList') {
-                    this.scanResult.filterListMatched = true;
-                }
                 if (this.autoAction) {
                     // wait for the scrape job to finish first
                     await this.scrapeJobDeferred.promise;
@@ -226,6 +241,18 @@ class CookiePopupsCollector extends ContentScriptCollector {
             case 'report':
                 msg.state.heuristicPatterns.forEach((x) => this.scanResult.patterns.add(x));
                 msg.state.heuristicSnippets.forEach((x) => this.scanResult.snippets.add(x));
+                if (msg.state.performance) {
+                    const frameInfo = this.contextFrameInfo.get(executionContextUniqueId);
+                    const url = normalizeFrameUrl(msg.url || '');
+                    if (!url) {
+                        break;
+                    }
+                    this.performanceResults.set(url, {
+                        url,
+                        isMainFrame: frameInfo?.isMainFrame ?? false,
+                        ...msg.state.performance,
+                    });
+                }
                 break;
             case 'optInResult':
             case 'optOutResult': {
@@ -437,6 +464,23 @@ class CookiePopupsCollector extends ContentScriptCollector {
         return results;
     }
 
+    async collectPerformanceResults() {
+        await Promise.all(
+            Array.from(this.cdpSessions.entries()).map(async ([executionContextUniqueId, session]) => {
+                try {
+                    await session.send('Runtime.evaluate', {
+                        expression: `autoconsentReceiveMessage({ type: "measurePerformance" })`,
+                        uniqueContextId: executionContextUniqueId,
+                    });
+                } catch (e) {
+                    if (!this.isIgnoredCdpError(e)) {
+                        this.log(`Error requesting performance data in ${executionContextUniqueId}: ${e}`);
+                    }
+                }
+            }),
+        );
+    }
+
     /**
      * @returns {Promise<ScrapeScriptResult[]>}
      */
@@ -508,6 +552,7 @@ class CookiePopupsCollector extends ContentScriptCollector {
         const popupFoundTimer = createTimer();
         const popupFound = await this.waitForPopupFound();
         this.log(`Waiting for popupFound took ${popupFoundTimer.getElapsedTime()}s`);
+        await this.collectPerformanceResults();
         if (popupFound && this.autoAction) {
             // make sure we start waiting only after the scrape job is done
             await this.scrapeJobDeferred.promise;
@@ -537,6 +582,7 @@ class CookiePopupsCollector extends ContentScriptCollector {
         const scrapedFrames = await timeboxedScrapeJob;
         return {
             cmps,
+            performance: Array.from(this.performanceResults.values()),
             scrapedFrames,
         };
     }
@@ -545,7 +591,20 @@ class CookiePopupsCollector extends ContentScriptCollector {
 /**
  * @typedef CookiePopupsCollectorResult
  * @property {AutoconsentResult[]} cmps
+ * @property {AutoconsentPerformanceResult[]} performance
  * @property {ScrapeScriptResult[]} scrapedFrames
+ */
+
+/**
+ * @typedef AutoconsentPerformanceResult
+ * @property {string} url
+ * @property {boolean} isMainFrame
+ * @property {number[]} filterCMPs
+ * @property {number[]} detectHeuristics
+ * @property {number[]} heuristicDetector
+ * @property {number[]} findCmpSiteSpecific
+ * @property {number[]} findCmpGeneric
+ * @property {number[]} findCmpHeuristic
  */
 
 /**
@@ -590,6 +649,8 @@ class CookiePopupsCollector extends ContentScriptCollector {
  * @typedef ButtonData
  * @property {string} text
  * @property {string} selector
+ * @property {'settings'|'accept'|'reject'|'acknowledge'|'other'} [llmClassification]
+ * @property {'settings'|'accept'|'reject'|'acknowledge'|'other'} [regexClassification]
  */
 
 /**

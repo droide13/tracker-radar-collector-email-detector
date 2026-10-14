@@ -1,133 +1,18 @@
 const { zodResponseFormat } = require('openai/helpers/zod');
 const { z } = require('zod');
-const { REJECT_PATTERNS, NEVER_MATCH_PATTERNS } = require('./button-patterns');
+const {
+    checkHeuristicPatterns: matchHeuristicPatterns,
+    classifyButtonTextRegex,
+    cleanButtonText,
+    isExcludedPopup,
+} = require('@duckduckgo/autoconsent/heuristics');
 
-// FIXME: the detection patterns are defined both in autoconsent codebase and here. We should consolidate them in one place.
 /**
  * @param {string} allText
  * @returns {boolean}
  */
 function checkHeuristicPatterns(allText) {
-    const DETECT_PATTERNS = [
-        /accept cookies/gi,
-        /accept all/gi,
-        /reject all/gi,
-        /only necessary cookies/gi, // "only necessary" is probably too broad
-        /(?:by continuing.{0,100}cookie)|(?:cookie.{0,100}by continuing)/gi,
-        /(?:by continuing.{0,100}privacy)|(?:privacy.{0,100}by continuing)/gi,
-        /by clicking.{0,100}(?:accept|agree|allow)/gi,
-        /we (?:use|serve)(?: optional)? cookies/gi,
-        /we are using cookies/gi,
-        /use of cookies/gi,
-        /(?:this|our) (?:web)?site.{0,100}cookies/gi,
-        /cookies (?:and|or) .{0,100} technologies/gi,
-        /such as cookies/gi,
-        /read more about.{0,100}cookies/gi,
-        /consent to.{0,100}cookies/gi,
-        /we and our partners.{0,100}cookies/gi,
-        /we.{0,100}store.{0,100}information.{0,100}such as.{0,100}cookies/gi,
-        /store and\/or access information.{0,100}on a device/gi,
-        /personalised ads and content, ad and content measurement/gi,
-
-        // it might be tempting to add the patterns below, but they cause too many false positives. Don't do it :)
-        // /cookies? settings/i,
-        // /cookies? preferences/i,
-
-        // FR
-        /utilisons.{0,100}des.{0,100}cookies/gi,
-        /nous.{0,100}utilisons.{0,100}des/gi,
-        /des.{0,100}cookies.{0,100}pour/gi,
-        /des.{0,100}informations.{0,100}sur/gi,
-        /retirer.{0,100}votre.{0,100}consentement/gi,
-        /accéder.{0,100}à.{0,100}des/gi,
-        /à.{0,100}des.{0,100}informations/gi,
-        /et.{0,100}nos.{0,100}partenaires/gi,
-        /publicités.{0,100}et.{0,100}du.{0,100}contenu/gi,
-        /utilise.{0,100}des.{0,100}cookies/gi,
-        /utilisent.{0,100}des.{0,100}cookies/gi,
-        /stocker.{0,100}et.{0,100}ou.{0,100}accéder/gi,
-        /consentement.{0,100}à.{0,100}tout.{0,100}moment/gi,
-        /votre.{0,100}consentement/gi,
-        /accepter.{0,100}tout/gi,
-        /utilisation.{0,100}des.{0,100}cookies/gi,
-        /cookies.{0,100}ou.{0,100}technologies/gi,
-        /acceptez.{0,100}l.{0,100}utilisation/gi,
-        /continuer sans accepter/gi,
-        /tout refuser/gi,
-        /(?:refuser|rejeter) tous les cookies/gi,
-        /je refuse/gi,
-        /refuser et continuer/gi,
-        /refuser les cookies/gi,
-        /seulement nécessaires/gi,
-        /je désactive les finalités non essentielles/gi,
-        /cookies essentiels uniquement/gi,
-        /nécessaires uniquement/gi,
-
-        // DE
-        /wir.{0,100}verwenden.{0,100}cookies/gi,
-        /wir.{0,100}und.{0,100}unsere.{0,100}partner/gi,
-        /zugriff.{0,100}auf.{0,100}informationen.{0,100}auf/gi,
-        /inhalte.{0,100}messung.{0,100}von.{0,100}werbeleistung.{0,100}und/gi,
-        /cookies.{0,100}und.{0,100}andere/gi,
-        /verwendung.{0,100}von.{0,100}cookies/gi,
-        /wir.{0,100}nutzen.{0,100}cookies/gi,
-        /verwendet.{0,100}cookies/gi,
-        /sie.{0,100}können.{0,100}ihre.{0,100}auswahl/gi,
-        /und.{0,100}ähnliche.{0,100}technologien/gi,
-        /cookies.{0,100}wir.{0,100}verwenden/gi,
-
-        /alles?.{0,100}ablehnen/gi,
-        /(?:nur|nicht).{0,100}(?:zusätzliche|essenzielle|funktionale|notwendige|erforderliche).{0,100}(?:cookies|akzeptieren|erlauben|ablehnen)/gi,
-        /weiter.{0,100}(?:ohne|mit).{0,100}(?:einwilligung|zustimmung|cookies)/gi,
-        /(?:cookies|einwilligung).{0,100}ablehnen/gi,
-        /nur funktionale cookies akzeptieren/gi,
-        /optionale ablehnen/gi,
-        /zustimmung verweigern/gi,
-
-        // NL
-        /gebruik.{0,100}van.{0,100}cookies/gi,
-        /(?:we|wij).{0,100}gebruiken.{0,100}cookies.{0,100}om/gi,
-        /cookies.{0,100}en.{0,100}vergelijkbare/gi,
-
-        /(?:alles|cookies).{0,100}(?:afwijzen|weigeren|verwerpen)/gi,
-        /alleen.{0,100}noodzakelijke?\b/gi,
-        /cookies weigeren/gi,
-        /weiger.{0,100}(?:cookies|alles)/gi,
-        /doorgaan zonder (?:te accepteren|akkoord te gaan)/gi,
-        /alleen.{0,100}(?:optionele|functionele|functioneel|noodzakelijke|essentiële).{0,100}cookies/gi,
-        /wijs alles af/gi,
-    ];
-
-    for (const p of DETECT_PATTERNS) {
-        const matches = allText.match(p);
-        if (matches) {
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
- * @param {string} buttonText
- * @returns {string}
- */
-function cleanButtonText(buttonText) {
-    // lowercase
-    let result = buttonText.toLowerCase();
-    // remove special characters
-    result = result.replace(/[“”"'/#&[\]→✕×⟩❯><✗×‘’›«»]+/g, '');
-    // remove emojis
-    result = result.replace(
-        /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u2600-\u26FF\u2700-\u27BF\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu,
-        '',
-    );
-    // remove newlines
-    result = result.replace(/\n+/g, ' ');
-    // remove multiple spaces
-    result = result.replace(/\s+/g, ' ');
-    // strip whitespace around the text
-    result = result.trim();
-    return result;
+    return matchHeuristicPatterns(allText).patterns.length > 0;
 }
 
 /**
@@ -135,14 +20,7 @@ function cleanButtonText(buttonText) {
  * @returns {boolean}
  */
 function isRejectButton(buttonText) {
-    if (!buttonText) {
-        return false;
-    }
-    const cleanedButtonText = cleanButtonText(buttonText);
-    return (
-        !NEVER_MATCH_PATTERNS.some((p) => p.test(cleanedButtonText)) &&
-        REJECT_PATTERNS.some((p) => (p instanceof RegExp && p.test(cleanedButtonText)) || p === cleanedButtonText)
-    );
+    return classifyButtonTextRegex(buttonText) === 'reject';
 }
 
 /**
@@ -178,7 +56,7 @@ Examples of NON-cookie popup text:
 
     try {
         const completion = await openai.beta.chat.completions.parse({
-            model: 'gpt-4.1-nano-2025-04-14',
+            model: 'gpt-4o-mini',
             messages: [
                 {
                     role: 'system',
@@ -202,6 +80,108 @@ Examples of NON-cookie popup text:
     return false;
 }
 
+/** @type {Map<string, ButtonClassification>} */
+const buttonClassificationCache = new Map();
+
+const ButtonTextClassificationSchema = z.object({
+    classification: z.enum(['settings', 'accept', 'reject', 'acknowledge', 'other']),
+});
+
+/**
+ * @param {import('openai').OpenAI} openai
+ * @param {string} buttonText
+ * @returns {Promise<ButtonClassification>}
+ */
+async function classifyButtonTextLLM(openai, buttonText) {
+    const cleaned = cleanButtonText(buttonText);
+    if (cleaned.length > 200) {
+        return 'other';
+    }
+
+    const cached = buttonClassificationCache.get(cleaned);
+    if (cached) {
+        return cached;
+    }
+
+    const systemPrompt = `
+You are an expert in web application user interfaces.
+
+You will be given the text of a button found on a cookie consent popup. Classify it
+into exactly one of the following categories:
+
+- settings: opens further customization of COOKIE or CONSENT preferences specifically (e.g. "Cookie Settings",
+  "Manage preferences", "Preferences", "Customize", "More options", "Manage cookies", "Show details"). Buttons that open other site settings (accessibility, language, etc.) are "other".
+- accept: explicitly accepts cookies, permits/allows consent, or signals agreement to something (e.g. "Accept
+  all", "I agree", "Allow all cookies", "Allow selection"). The language must reference agreement,
+  acceptance, or permitting — not just dismissal.
+- reject: rejects cookies or opts out, including accepting only minimal/essential
+  cookies and data-sale opt-outs (e.g. "Reject all", "Essential only", "Do not sell my personal information", "opt out").
+- acknowledge: dismisses the notice with neutral language that does not explicitly
+  reference accepting or rejecting (e.g. "OK", "Got it", "Close", "Dismiss", "Continue",
+  "I understand", "×", "confirm my choices").
+- other: none of the above (e.g. links to Privacy Policy, Impressum, or other
+  informational content). Additionally, anything including payments or subscriptions, age checks, or
+  language that suggests that the user would not be able to continue if they click this button, should be classified as other.
+
+Rules:
+- IMPORTANT: If a button accepts ONLY necessary, essential, required, or strictly
+    necessary cookies (even if the word "accept" appears), classify as reject.
+    Examples: "Strictly necessary", "Essentials", "Required", "Accept necessary cookies",
+    "Accept essential only", "Notwendige Cookies akzeptieren" → reject
+- IMPORTANT: "Do not sell", opt-out, decline, or disagree refusing consent → reject.
+- IMPORTANT: Distinguish "confirm/apply a selection" from "open customization":
+    - accept: confirms, saves, or applies the user's current or pre-selected consent choices
+      (e.g. "Allow selection", "Accept selected", "zezwól na wybór", "zezwól na wybrane",
+      "permitir la selección", "akceptuj wybrane").
+    - settings: opens a UI to review, change, or make choices (e.g. "Customize", "Manage preferences",
+      "Let me choose", "dostosuj wybór", "pozwól mi wybrać", "Show details").
+    Verbs like allow/permit/accept + selection/selected → accept.
+    Verbs like customize/manage/adjust/let me choose/show → settings.
+    Apply these rules regardless of language.
+- Only classify buttons that fit unabiguously into one of the categories, otherwise classify as other.
+- If the text contains a negation indicating refusal (e.g. "continue without
+  accepting"), classify as reject.
+- Standalone Close, Dismiss, ×, or x, and close/dismiss of cookie banners or notices in any language → acknowledge, not other.
+- If a button could fit multiple categories, prefer in this order:
+  reject > accept > settings > acknowledge > other.
+- The button text may be in any language — apply the same rules regardless.
+- Respond with exactly one word: the category label. No explanation, no punctuation.
+- Short affirmatives that imply agreement ("yes", "yeah") → accept, not acknowledge.
+  "acknowledge" is for neutral dismissals that make no reference to agreement.
+- If the button text contains a qualifier that makes it clearly unrelated to cookies
+  or consent (e.g. "ad", "advertisement", "video", "newsletter"), classify as other,
+  regardless of the action word.
+- "Cancel" → other. It cancels an action within a dialog, not a consent decision.
+
+Examples:
+"Cookie Settings", "Manage preferences", "Customize", "dostosuj wybór", "pozwól mi wybrać" → settings
+"Accept all", "I agree", "Allow cookies", "Allow selection", "Akzeptieren", "zezwól na wybór", "permitir la selección" → accept
+"Reject all", "Essential only", "Ablehnen", "Do not sell my personal information", "opt out", "disagree and close" → reject
+"OK", "Got it", "I understand", "×", "Close", "Dismiss", "cerrar", "zamknij", "confirm my choices", "Close cookie notice", "Continue" → acknowledge
+"Privacy Policy", "Cookie-Richtlinie", "Impressum", "Learn more", "close ad", "Cancel" → other
+    `;
+
+    try {
+        const completion = await openai.beta.chat.completions.parse({
+            model: 'gpt-4o-mini',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: `"${cleaned}"` },
+            ],
+            response_format: zodResponseFormat(ButtonTextClassificationSchema, 'ButtonTextClassification'),
+        });
+
+        const classification = completion.choices[0].message.parsed?.classification ?? 'other';
+        buttonClassificationCache.set(cleaned, classification);
+        return classification;
+    } catch (error) {
+        console.error('Error classifying button text:', error);
+    }
+
+    buttonClassificationCache.set(cleaned, 'other');
+    return 'other';
+}
+
 /**
  * @param {import('./types').ButtonData[]} buttons
  * @returns {{rejectButtons: import('./types').ButtonData[], otherButtons: import('./types').ButtonData[]}}
@@ -223,6 +203,22 @@ function classifyButtons(buttons) {
 }
 
 /**
+ * @param {import('./types').ButtonData[]} buttons
+ * @param {import('openai').OpenAI} openai
+ * @returns {Promise<import('./types').ButtonData[]>}
+ */
+async function labelButtons(buttons, openai) {
+    /** @type {import('./types').ButtonData[]} */
+    const labelledButtons = [];
+    for (const button of buttons) {
+        const llmClassification = await classifyButtonTextLLM(openai, button.text);
+        const regexClassification = classifyButtonTextRegex(button.text);
+        labelledButtons.push({ ...button, llmClassification, regexClassification });
+    }
+    return labelledButtons;
+}
+
+/**
  * Run popup through LLM and regex to determine if it's a cookie popup and identify reject buttons.
  * @param {import('./types').PopupData} popup
  * @param {import('openai').OpenAI} openai
@@ -233,11 +229,12 @@ async function classifyPopup(popup, openai) {
     let regexMatch = false;
     let llmMatch = false;
     if (popupText) {
-        regexMatch = checkHeuristicPatterns(popupText);
+        regexMatch = !isExcludedPopup(popupText) && checkHeuristicPatterns(popupText);
         llmMatch = await checkLLM(openai, popupText);
     }
-
-    const { rejectButtons, otherButtons } = classifyButtons(popup.buttons);
+    // only label buttons if the popup is considered a cookie popup by regex or LLM
+    const buttons = regexMatch || llmMatch ? await labelButtons(popup.buttons, openai) : popup.buttons;
+    const { rejectButtons, otherButtons } = classifyButtons(buttons);
 
     return {
         llmMatch,
@@ -246,6 +243,10 @@ async function classifyPopup(popup, openai) {
         otherButtons,
     };
 }
+
+/**
+ * @typedef {import('@duckduckgo/autoconsent/heuristics').ButtonRegexClassification} ButtonClassification
+ */
 
 /**
  * @typedef {Object} PopupClassificationResult
@@ -259,4 +260,8 @@ module.exports = {
     classifyButtons,
     classifyPopup,
     checkHeuristicPatterns,
+    classifyButtonTextRegex,
+    classifyButtonTextLLM,
+    cleanButtonText,
+    isRejectButton,
 };
